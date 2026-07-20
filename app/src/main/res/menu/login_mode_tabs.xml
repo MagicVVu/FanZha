@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/tab_account_login"
+        android:icon="@drawable/ic_login_tab_account"
+        android:title="@string/login_tab_account" />
+    <item
+        android:id="@+id/tab_register"
+        android:icon="@drawable/ic_login_tab_register"
+        android:title="@string/login_tab_register" />
+</menu>

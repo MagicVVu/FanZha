@@ -1,0 +1,35 @@
+# Android / Gradle
+.gradle/
+.kotlin/
+**/build/
+local.properties
+
+# IDE and operating system
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Native and generated output
+.externalNativeBuild/
+.cxx/
+captures/
+*.apk
+*.aab
+*.dex
+*.class
+
+# Logs and crash dumps
+*.log
+hs_err_pid*
+replay_pid*
+
+# Credentials and signing material
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+keystore.properties
+service-account*.json
+

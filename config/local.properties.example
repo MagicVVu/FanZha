@@ -1,0 +1,13 @@
+# Copy the required keys to <project-root>/local.properties.
+# Android Studio will add sdk.dir automatically.
+
+# Core business APIs: authentication, profile, family and interception data.
+api.base.url=https://api.example.com/
+
+# AI APIs: multimodal analysis, assistant chat, SSE and report advice.
+ai.api.base.url=https://ai.example.com/
+
+# Local integration only. Do not use a client-side OTP in production.
+# The production registration flow must verify OTP on the server.
+registration.otp=
+
