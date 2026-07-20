@@ -1,0 +1,59 @@
+services:
+  mysql:
+    image: mysql:8.0.36
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: fanzha
+      MYSQL_USER: fanzha
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in backend/.env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in backend/.env}
+      TZ: Asia/Shanghai
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  chroma:
+    image: chromadb/chroma:0.5.23
+    restart: unless-stopped
+    environment:
+      IS_PERSISTENT: "TRUE"
+    ports:
+      - "${CHROMA_PORT:-8000}:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+
+  backend:
+    build:
+      context: .
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/fanzha?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      DB_USERNAME: fanzha
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in backend/.env}
+      CHROMA_HOST: chroma
+      CHROMA_PORT: 8000
+      CHROMA_AUTO_INIT: ${CHROMA_AUTO_INIT:-false}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      CRAWLER_ENABLED: ${CRAWLER_ENABLED:-false}
+      DEEPSEEK_EXTRACT_ENABLED: ${DEEPSEEK_EXTRACT_ENABLED:-false}
+      INGESTION_ENDPOINTS_ENABLED: ${INGESTION_ENDPOINTS_ENABLED:-false}
+      ADMIN_ENDPOINTS_ENABLED: ${ADMIN_ENDPOINTS_ENABLED:-false}
+      APP_CORS_ALLOWED_ORIGIN_PATTERNS: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:-http://localhost:*}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+
+volumes:
+  mysql-data:
+  chroma-data:

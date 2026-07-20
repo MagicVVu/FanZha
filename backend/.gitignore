@@ -1,0 +1,13 @@
+target/
+.idea/
+*.iml
+.env
+.env.*
+!.env.example
+data/*
+!data/README.md
+chroma_data/
+*.sqlite3
+*.log
+fraud_crawler_checkpoint.json
+playwright-user-data/

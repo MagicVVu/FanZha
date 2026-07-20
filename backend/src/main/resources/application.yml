@@ -1,0 +1,199 @@
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+spring:
+  application:
+    name: fanzha-backend
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/fanzha?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:fanzha}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    open-in-view: false
+    show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL57Dialect
+        format_sql: true
+  batch:
+    jdbc:
+      initialize-schema: ${BATCH_INITIALIZE_SCHEMA:always}
+  servlet:
+    multipart:
+      max-file-size: ${MAX_UPLOAD_FILE_SIZE:20MB}
+      max-request-size: ${MAX_UPLOAD_REQUEST_SIZE:100MB}
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+app:
+  cors:
+    allowed-origin-patterns: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*}
+  ingestion:
+    enabled: ${INGESTION_ENDPOINTS_ENABLED:false}
+  admin:
+    enabled: ${ADMIN_ENDPOINTS_ENABLED:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+aliyun:
+  oss:
+    access-key-id: ${ALIYUN_OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${ALIYUN_OSS_ACCESS_KEY_SECRET:}
+    endpoint: ${ALIYUN_OSS_ENDPOINT:oss-cn-shenzhen.aliyuncs.com}
+    bucket-name: ${ALIYUN_OSS_BUCKET:}
+
+deepseek:
+  base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+  api-key: ${DEEPSEEK_API_KEY:}
+  model: ${DEEPSEEK_MODEL:deepseek-chat}
+  embedding-model: ${DEEPSEEK_EMBEDDING_MODEL:deepseek-embedding}
+  connect-timeout-ms: ${DEEPSEEK_CONNECT_TIMEOUT_MS:10000}
+  read-timeout-ms: ${DEEPSEEK_READ_TIMEOUT_MS:60000}
+
+chroma:
+  host: ${CHROMA_HOST:localhost}
+  port: ${CHROMA_PORT:8000}
+  tenant: ${CHROMA_TENANT:default_tenant}
+  database: ${CHROMA_DATABASE:default_database}
+  collection-name: ${CHROMA_COLLECTION:anti_fraud_news}
+  auto-init: ${CHROMA_AUTO_INIT:false}
+
+scheduler:
+  cron: ${KNOWLEDGE_ETL_CRON:0 30 2 * * ?}
+
+line1:
+  enabled: ${KNOWLEDGE_ETL_ENABLED:false}
+
+crawler:
+  enabled: ${CRAWLER_ENABLED:false}
+  cron: ${CRAWLER_CRON:0 30 3 * * ?}
+  prefer-ipv4: ${CRAWLER_PREFER_IPV4:true}
+  max-items-per-run: ${CRAWLER_MAX_ITEMS:12}
+  min-delay-ms: 2500
+  max-delay-ms: 6500
+  requests-per-minute: 6
+  require-keyword-match: true
+  allow-unknown-publish-time: true
+  max-article-age-days: 120
+  min-fraud-score: 0.52
+  gray-enhanced-filter-enabled: false
+  sogou-placeholder-enabled: false
+  source-repair-alert-hours: 24
+  checkpoint-path: ${CRAWLER_CHECKPOINT_PATH:./data/fraud_crawler_checkpoint.json}
+  sogou-local-json:
+    enabled: false
+    files: []
+  fraud-keywords:
+    - 诈骗
+    - 电信诈骗
+    - 网络诈骗
+    - 金融诈骗
+    - 刷单诈骗
+    - 冒充公检法
+    - 杀猪盘
+    - 非法集资
+    - 洗钱
+  user-agents:
+    - Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36
+    - Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36
+  proxy:
+    enabled: ${PROXY_ENABLED:false}
+    api-url: ${PROXY_POOL_API_URL:}
+    host: ${PROXY_HOST:}
+    port: ${PROXY_PORT:0}
+    username: ${PROXY_USERNAME:}
+    password: ${PROXY_PASSWORD:}
+  captcha:
+    enabled: ${CAPTCHA_ENABLED:false}
+    tessdata-path: ${TESSDATA_PATH:}
+  playwright:
+    enabled: ${PLAYWRIGHT_ENABLED:false}
+    headless: ${PLAYWRIGHT_HEADLESS:true}
+    navigation-timeout-ms: 45000
+    extra-settle-ms: 2500
+    browsers-path: ${PLAYWRIGHT_BROWSERS_PATH:}
+    user-data-dir: ${PLAYWRIGHT_USER_DATA_DIR:./data/playwright-user-data}
+    wait-until: domcontentloaded
+  sources:
+    - name: sogou-weixin-taolu
+      base-url: https://weixin.sogou.com
+      list-url: https://weixin.sogou.com/weixin?type=2&query=%E8%AF%88%E9%AA%97%E5%A5%97%E8%B7%AF
+      strategy: sogou-weixin
+      trust-score: 0.72
+      article-hosts: [mp.weixin.qq.com]
+      list-link-selector: "a[href*='weixin.sogou.com/link']"
+      article-title-selector: "h1, #activity-name, .rich_media_title"
+      article-time-selector: "#publish_time, em#publish_time, [id*=publish]"
+      article-content-selector: "#js_content, .rich_media_content, article, #content, body"
+      priority: 140
+    - name: sogou-weixin-fanzha
+      base-url: https://weixin.sogou.com
+      list-url: https://weixin.sogou.com/weixin?type=2&query=%E5%8F%8D%E8%AF%88
+      strategy: sogou-weixin
+      trust-score: 0.75
+      article-hosts: [mp.weixin.qq.com]
+      list-link-selector: "a[href*='weixin.sogou.com/link']"
+      article-title-selector: "h1, #activity-name, .rich_media_title"
+      article-time-selector: "#publish_time, em#publish_time, [id*=publish]"
+      article-content-selector: "#js_content, .rich_media_content, article, #content, body"
+      priority: 139
+    - name: baidu-fqz-news
+      base-url: https://110.baidu.com
+      list-url: https://110.baidu.com/fqz
+      strategy: baidu-fqz
+      trust-score: 0.88
+      list-link-selector: "a[href*='110.baidu.com'], a[href*='baidu.com/fqz']"
+      article-title-selector: "h1, .title, .article-title, [class*=title]"
+      article-time-selector: ".time, .date, [class*=time], [class*=date]"
+      article-content-selector: "article, .content, .article-content, #content, main, body"
+      priority: 138
+
+deepseek-extract:
+  enabled: ${DEEPSEEK_EXTRACT_ENABLED:false}
+  model: ${DEEPSEEK_EXTRACT_MODEL:deepseek-chat}
+  timeout-ms: ${DEEPSEEK_EXTRACT_TIMEOUT_MS:60000}
+  max-retries: ${DEEPSEEK_EXTRACT_MAX_RETRIES:5}
+
+embedding:
+  base-url: ${EMBEDDING_BASE_URL:http://localhost:9001}
+  timeout-ms: ${EMBEDDING_TIMEOUT_MS:10000}
+  model: ${EMBEDDING_MODEL:bge-large-zh-v1.5}
+  dim: ${EMBEDDING_DIM:1024}
+
+vector-store:
+  type: ${VECTOR_STORE_TYPE:chroma}
+  milvus:
+    host: ${MILVUS_HOST:localhost}
+    port: ${MILVUS_PORT:19530}
+    collection: ${MILVUS_COLLECTION:fraud_cases}
+    dim: ${EMBEDDING_DIM:1024}
+    nlist: ${MILVUS_NLIST:2048}
+
+storage:
+  fraud-news:
+    mode: db
+    table: fraud_news
+    columns:
+      url: url
+      title: title
+      summary: summary
+      content: content
+      publish_time: publish_time
+      source: source
+      fraud_tags: fraud_tags
+      confidence: confidence
+      raw_html: raw_html
+      content_hash: content_hash
+      deepseek_analysis: deepseek_analysis

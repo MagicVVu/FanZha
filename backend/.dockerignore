@@ -1,0 +1,9 @@
+target/
+.idea/
+*.iml
+.env
+data/
+chroma_data/
+*.log
+Dockerfile*
+README.md
