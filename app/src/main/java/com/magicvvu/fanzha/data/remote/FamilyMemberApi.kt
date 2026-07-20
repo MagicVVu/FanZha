@@ -38,4 +38,3 @@ data class FamilyMemberDto(
     @SerializedName("suspiciousAppCount") val suspiciousAppCount: Int? = null,
     @SerializedName("clipboardCount") val clipboardCount: Int? = null,
 )
-

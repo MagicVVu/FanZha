@@ -1062,14 +1062,14 @@ fun RiskBadge(type: String) {
         "Error" -> "失败" to Color(0xFFE65100)
         else -> "未知" to MaterialTheme.colorScheme.outline
     }
-    
+
     Box(
         modifier = Modifier
             .background(color.copy(alpha = 0.1f), shape = RoundedCornerShape(8.dp))
             .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
         Text(
-            text, 
+            text,
             style = MaterialTheme.typography.labelSmall,
             color = color,
             fontWeight = FontWeight.Bold

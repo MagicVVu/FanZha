@@ -69,7 +69,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     var isSwitching by mutableStateOf(false)
         private set
-        
+
     var switchError by mutableStateOf<String?>(null)
         private set
 
@@ -261,7 +261,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         persistCurrentUser()
         syncProfileToServer(next)
     }
-    
+
     fun clearError() {
         switchError = null
     }

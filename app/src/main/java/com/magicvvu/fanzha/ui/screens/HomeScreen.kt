@@ -368,7 +368,7 @@ fun HomeScreen(
                         onWaveFillIntroFinished = { viewModel.markSafetyIndexWaveIntroDone() }
                     )
                 }
-                
+
                 // Stats (诈骗拦截)
                 item {
                     StatsCard(
@@ -489,14 +489,14 @@ fun SecurityScoreCard(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "安全指数", 
+                    text = "安全指数",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(12.dp))
-            
+
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -521,9 +521,9 @@ fun SecurityScoreCard(
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         AppButton(
             text = "查看安全分析报告",
             onClick = onNavigateToReport,
@@ -571,7 +571,7 @@ fun PersonalizedSuggestionsCard(
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         // We use a custom layout for the timeline style instead of AppCard
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -601,7 +601,7 @@ fun SuggestionTimelineItem(suggestion: PersonalizedSuggestion, isLast: Boolean) 
                 "日常建议" -> Color(0xFF4CAF50) // Green
                 else -> Color(0xFF1976D2) // Blue default
             }
-            
+
             Box(
                 modifier = Modifier
                     .width(28.dp)
@@ -617,7 +617,7 @@ fun SuggestionTimelineItem(suggestion: PersonalizedSuggestion, isLast: Boolean) 
                     textAlign = TextAlign.Center
                 )
             }
-            
+
             if (!isLast) {
                 Box(
                     modifier = Modifier

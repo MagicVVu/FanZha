@@ -136,7 +136,7 @@ fun LiquidButton(
                 .fillMaxSize()
                 .background(shineGradient)
         )
-        
+
         // Content
         ProvideTextStyle(value = MaterialTheme.typography.titleMedium.copy(color = contentColor)) {
             Row(

@@ -68,4 +68,3 @@ object SecurityRealtimeIngestCoordinator {
         Log.d(TAG, "realtime ingest coordinator stopped")
     }
 }
-

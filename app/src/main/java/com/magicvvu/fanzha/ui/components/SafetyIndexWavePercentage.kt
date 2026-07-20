@@ -303,4 +303,3 @@ private fun DrawScope.fillWaveRegionBelow(
     path.lineTo(0f, size.height)
     path.close()
 }
-

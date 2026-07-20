@@ -18,19 +18,19 @@ import retrofit2.Response
 class LoginViewModel : ViewModel() {
     var email by mutableStateOf("")
         private set
-    
+
     var password by mutableStateOf("")
         private set
-        
+
     var inviteCode by mutableStateOf("")
         private set
 
     var isRememberMeChecked by mutableStateOf(false)
         private set
-        
+
     var isLoading by mutableStateOf(false)
         private set
-        
+
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
@@ -39,7 +39,7 @@ class LoginViewModel : ViewModel() {
 
     var shouldSwitchToLogin by mutableStateOf(false)
         private set
-        
+
     var loginSuccess by mutableStateOf(false)
         private set
 
@@ -379,7 +379,7 @@ class LoginViewModel : ViewModel() {
             }
         }
     }
-    
+
     fun resetState() {
         loginSuccess = false
         userInfoAfterLogin = null

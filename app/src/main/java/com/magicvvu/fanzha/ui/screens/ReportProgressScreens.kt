@@ -258,7 +258,7 @@ fun ReportProgressDetailScreen(
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(bottom = 16.dp),
                     )
-                    
+
                     nodes.forEachIndexed { index, node ->
                         ProgressTimelineItem(
                             node = node,
@@ -304,9 +304,9 @@ fun ProgressTimelineItem(node: ProgressNode, isLast: Boolean) {
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.width(12.dp))
-        
+
         // Content Column
         Column(modifier = Modifier.weight(1f).padding(bottom = if (isLast) 0.dp else 24.dp)) {
             Text(

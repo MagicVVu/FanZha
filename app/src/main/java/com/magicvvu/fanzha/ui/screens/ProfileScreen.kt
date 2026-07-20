@@ -334,7 +334,7 @@ fun ProfileScreen(
                             }
                         }
                     }
-                    
+
                     item {
                         Box(
                             modifier = Modifier
@@ -343,7 +343,7 @@ fun ProfileScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                "当前版本 v1.0.0", 
+                                "当前版本 v1.0.0",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -380,12 +380,12 @@ fun ProfileScreen(
                         modifier = Modifier.padding(bottom = 16.dp),
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    
+
                     LazyColumn {
                         items(viewModel.availableUsers.size) { index ->
                             val user = viewModel.availableUsers[index]
                             val isSelected = user.id == viewModel.currentUser.id
-                            
+
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -404,7 +404,7 @@ fun ProfileScreen(
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        user.name, 
+                                        user.name,
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                     )

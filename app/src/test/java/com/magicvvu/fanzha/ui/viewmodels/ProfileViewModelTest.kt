@@ -48,7 +48,7 @@ class ProfileViewModelTest {
     fun testSwitchUser_Success() = runTest(testDispatcher) {
         val viewModel = ProfileViewModel(application)
         val targetUser = UserProfile(id = "2", name = "另一账户")
-        
+
         viewModel.switchUser(targetUser)
 
         assertEquals(targetUser, viewModel.currentUser)
@@ -60,11 +60,11 @@ class ProfileViewModelTest {
     fun testSwitchUser_SameUser() = runTest(testDispatcher) {
         val viewModel = ProfileViewModel(application)
         val currentUser = viewModel.currentUser
-        
+
         viewModel.switchUser(currentUser)
-        
+
         testScheduler.advanceUntilIdle()
-        
+
         assertFalse(viewModel.isSwitching)
         assertEquals(currentUser, viewModel.currentUser)
     }

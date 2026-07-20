@@ -84,4 +84,3 @@ object ApiClient {
         retrofit.create(QuizScoreApi::class.java)
     }
 }
-

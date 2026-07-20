@@ -353,4 +353,3 @@ class AiChatViewModel : ViewModel() {
         return builder.toString()
     }
 }
-

@@ -19,4 +19,3 @@ data class UserSecurityScoreDto(
     @SerializedName("securityScore") val securityScore: Int,
     @SerializedName("updateTime") val updateTime: String? = null,
 )
-

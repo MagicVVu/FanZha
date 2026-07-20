@@ -20,4 +20,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "FanZha"
 include(":app")
- 

@@ -73,7 +73,7 @@ class LearningViewModel : ViewModel() {
 
     private val _guideTopics = MutableStateFlow<List<GuideTopic>>(emptyList())
     val guideTopics: StateFlow<List<GuideTopic>> = _guideTopics.asStateFlow()
-    
+
     private val _quizQuestions = MutableStateFlow<List<QuizQuestion>>(emptyList())
     val quizQuestions: StateFlow<List<QuizQuestion>> = _quizQuestions.asStateFlow()
 
@@ -196,7 +196,7 @@ class LearningViewModel : ViewModel() {
                     ),
                 ),
             )
-            
+
             _guideTopics.value = listOf(
                 GuideTopic(
                     title = "常见诈骗类型",
@@ -391,7 +391,7 @@ class LearningViewModel : ViewModel() {
                 ),
             )
     }
-    
+
     /** 学习页轮播图点击：与 `FraudCase.id` 对应的详情（布局同诈骗案例分享详情） */
     fun getCarouselDetailCase(fraudCaseId: String): SharedCase? = when (fraudCaseId) {
         "1" -> SharedCase(

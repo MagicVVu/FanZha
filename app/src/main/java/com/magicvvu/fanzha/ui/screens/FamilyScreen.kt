@@ -209,17 +209,17 @@ class FamilyViewModel {
             isLoading.value = false
         }
     }
-    
+
     suspend fun updateGuardian(id: String, name: String, phone: String, relation: String): Boolean {
         isLoading.value = true
         delay(800)
         isLoading.value = false
-        
+
         if (phone.length != 11) {
             errorMsg.value = "手机号格式不正确"
             return false
         }
-        
+
         val index = guardians.indexOfFirst { it.id == id }
         if (index != -1) {
             // Check if phone exists for OTHER guardians
@@ -227,7 +227,7 @@ class FamilyViewModel {
                 errorMsg.value = "该手机号已存在"
                 return false
             }
-            
+
             guardians[index] = guardians[index].copy(name = name, phone = phone, relation = relation)
             return true
         }
@@ -353,7 +353,7 @@ fun FamilyScreen(
                         onMemberInterceptSection = onOpenMemberInterceptChannel,
                     )
                 }
-                
+
                 item {
                     val outline = MaterialTheme.colorScheme.outline
                     val addLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -442,7 +442,7 @@ fun FamilyScreen(
         val initialName = showEditDialog?.name ?: ""
         val initialPhone = showEditDialog?.phone ?: ""
         val initialRelation = showEditDialog?.relation ?: guardianRelationOptions.first()
-        
+
         GuardianDialog(
             isEdit = isEdit,
             initialName = initialName,
@@ -455,8 +455,8 @@ fun FamilyScreen(
                     showDeleteConfirm = g
                 }
             } else null,
-            onDismiss = { 
-                showAddDialog = false 
+            onDismiss = {
+                showAddDialog = false
                 showEditDialog = null
             },
             // 添加：仅传「手机号 + 关系」给后端；与纯 UI 列表 guardianRelationOptions 解耦，避免与姓名字段混用
@@ -604,9 +604,9 @@ fun FamilySummaryCard(stats: FamilyStats, activities: List<SuspiciousActivity>) 
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Stats Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -645,16 +645,16 @@ fun FamilySummaryCard(stats: FamilyStats, activities: List<SuspiciousActivity>) 
             Spacer(modifier = Modifier.height(24.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Text(
                 text = "近期可疑动态",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             if (activities.isEmpty()) {
                 Text(
                     text = "暂无异常动态，家庭成员环境安全",
@@ -812,7 +812,7 @@ fun GuardianExpandableItem(
                         size = 48.dp,
                         textStyle = MaterialTheme.typography.titleLarge,
                     )
-                    
+
                     // Online Status Indicator
                     Box(
                         modifier = Modifier
@@ -829,9 +829,9 @@ fun GuardianExpandableItem(
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.width(16.dp))
-                
+
                 // Name and Relation
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -904,13 +904,13 @@ fun GuardianExpandableItem(
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            "${guardian.safetyIndex}", 
-                            style = MaterialTheme.typography.titleMedium, 
+                            "${guardian.safetyIndex}",
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = barColor
                         )
                     }
-                    
+
                     Spacer(modifier = Modifier.height(20.dp))
 
                     // Per-member intercept stats (2×2 grid)
@@ -1196,4 +1196,3 @@ fun GuardianDialog(
         }
     )
 }
-

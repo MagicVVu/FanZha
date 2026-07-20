@@ -168,4 +168,3 @@ fun FraudReportScreen(
         }
     }
 }
-

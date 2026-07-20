@@ -33,4 +33,3 @@ data class QuizScoreLatestDto(
     /** 服务端 quiz_score.update_time（通常为 yyyy-MM-dd HH:mm:ss）。 */
     @SerializedName("updateTime") val updateTime: String? = null,
 )
-

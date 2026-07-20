@@ -35,21 +35,21 @@ private val LightColorScheme = lightColorScheme(
     onTertiaryContainer = BrandOrange,
 
     // Background & Surface
-    background = LightBackground,    
-    onBackground = LightTextPrimary, 
-    surface = LightSurface,          
-    onSurface = LightTextPrimary,    
-    
+    background = LightBackground,
+    onBackground = LightTextPrimary,
+    surface = LightSurface,
+    onSurface = LightTextPrimary,
+
     // Surface Variant (Input fields, dividers, secondary cards)
     surfaceVariant = Color(0xFFF1F5F9), // Slightly darker slate for variants
-    onSurfaceVariant = LightTextSecondary, 
+    onSurfaceVariant = LightTextSecondary,
 
     // Error: Coral (#ED6160)
     error = BrandCoral,
     onError = Color.White,
     errorContainer = BrandCoral.copy(alpha = 0.1f),
     onErrorContainer = BrandCoral,
-    
+
     // Outline
     outline = LightBorder,
     outlineVariant = Color(0xFFCBD5E1)

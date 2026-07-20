@@ -397,7 +397,7 @@ fun SharedCasesSection(cases: List<SharedCase>, onCaseClick: (SharedCase) -> Uni
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 12.dp)
         )
-        
+
         if (cases.isEmpty()) {
             Text("暂无案例分享")
         } else {
@@ -482,7 +482,7 @@ fun FraudGuide(topics: List<GuideTopic>) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 12.dp)
         )
-        
+
         topics.forEach { topic ->
             GuideItem(topic)
             Spacer(modifier = Modifier.height(8.dp))
