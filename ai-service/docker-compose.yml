@@ -1,0 +1,42 @@
+services:
+  anti_fraud_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: anti_fraud_api
+    restart: unless-stopped
+    env_file:
+      - ${FANZHA_AI_ENV_FILE:-.env.production}
+    environment:
+      PORT: 8000
+      UVICORN_WORKERS: 1
+      USE_QDRANT_KB: "true"
+      KB_QDRANT_PATH: /app/app/data/qdrant_store
+      HF_HOME: /app/.cache/huggingface
+      TRANSFORMERS_CACHE: /app/.cache/huggingface
+      XDG_CACHE_HOME: /app/.cache
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    volumes:
+      - ./app/data:/app/app/data
+      - ./uploads:/app/uploads
+      - ./server-cache:/app/.cache
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: anti_fraud_nginx
+    depends_on:
+      anti_fraud_api:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro

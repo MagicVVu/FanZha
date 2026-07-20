@@ -1,0 +1,8 @@
+[
+  {
+    "baseline_name": "stage1_retrieval_baseline",
+    "frozen_at": "2026-04-06T15:22:00",
+    "kb_build_version": "20260406_151947_stage1_seed_batch3_hotfix_8b6b2e1e",
+    "baseline_path": "app/data/baselines/stage1_retrieval_baseline.json"
+  }
+]

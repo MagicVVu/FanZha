@@ -25,11 +25,26 @@ hs_err_pid*
 replay_pid*
 __pycache__/
 *.py[cod]
+.venv/
+.venv*/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# AI service runtime data
+ai-service/uploads/
+ai-service/server-cache/
+ai-service/app/data/qdrant_store/
+ai-service/app/data/kb_updates/
+ai-service/app/data/kb_versions/
+ai-service/app/data/user_memory_store.json
+ai-service/tests/_tmp_*/
 
 # Credentials and signing material
 .env
 .env.*
 !.env.example
+!.env.production.example
 *.jks
 *.keystore
 keystore.properties

@@ -1,0 +1,71 @@
+{
+  "build_version": "20260406_153641_stage2_hybrid_v1_8b6b2e1e",
+  "build_tag": "stage2_hybrid_v1",
+  "collection_name": "fraud_knowledge",
+  "seed_path": "app/data/faq_seed.json",
+  "seed_sha256": "8b6b2e1ec3828aa3fb4156e8e0bda2e823e2ae48d96ccfa71886c314c673fb0d",
+  "seed_count": 48,
+  "seed_summary": {
+    "seed_count": 48,
+    "fraud_type_count": 9,
+    "subtype_count": 16,
+    "risk_level_count": {
+      "high": 33,
+      "medium": 15
+    },
+    "fraud_type_distribution": {
+      "中奖领奖诈骗": 3,
+      "冒充公检法": 3,
+      "冒充客服": 21,
+      "冒充银行客服": 3,
+      "冻结解冻诈骗": 3,
+      "刷单返利诈骗": 3,
+      "征信修复诈骗": 3,
+      "快递理赔诈骗": 6,
+      "投资理财诈骗": 3
+    },
+    "subtype_distribution": {
+      "brushing_order": 3,
+      "courier_compensation": 3,
+      "courier_link_scam": 3,
+      "credit_repair": 3,
+      "deposit_freeze": 3,
+      "fake_customer_service": 3,
+      "fake_police": 3,
+      "identity_verification": 3,
+      "investment_scam": 3,
+      "membership_fee_scam": 3,
+      "order_exception": 3,
+      "private_contact_refund": 3,
+      "prize_registration": 3,
+      "refund_recheck": 3,
+      "safe_account_transfer": 3,
+      "screen_sharing": 3
+    }
+  },
+  "chunk_count": 84,
+  "actual_points": 84,
+  "vector_dim": 512,
+  "embed_model": "BAAI/bge-small-zh-v1.5",
+  "query_instruction": "为这个句子生成用于检索相似反诈知识的向量",
+  "retrieval_config": {
+    "pipeline": "hybrid_recall_v1__heuristic_rerank_v1",
+    "top_k_default": 3,
+    "min_score": 0.18,
+    "no_signal_min_score": 0.75,
+    "first_stage_multiplier": 4,
+    "first_stage_min_candidates": 10,
+    "hybrid_dense_weight": 0.55,
+    "hybrid_lexical_weight": 0.45,
+    "hybrid_rrf_k": 60,
+    "hybrid_rank_bonus_scale": 10.0,
+    "second_stage_signal_cap": 0.28,
+    "second_stage_no_overlap_penalty": 0.18,
+    "second_stage_lexical_bonus": 0.03,
+    "use_qdrant": true
+  },
+  "qdrant_path": "app/data/qdrant_store",
+  "top_k_default": 3,
+  "min_score": 0.18,
+  "created_at": "2026-04-06T15:36:55.783265"
+}

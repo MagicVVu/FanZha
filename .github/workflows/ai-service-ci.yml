@@ -1,0 +1,48 @@
+name: 智能分析服务持续集成
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ai-service/**"
+      - ".github/workflows/ai-service-ci.yml"
+  pull_request:
+    paths:
+      - "ai-service/**"
+      - ".github/workflows/ai-service-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-service-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python 语法与轻量测试
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 检出源码
+        uses: actions/checkout@v4
+
+      - name: 配置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: ai-service/requirements-test.txt
+
+      - name: 安装测试依赖
+        working-directory: ai-service
+        run: pip install -r requirements-test.txt
+
+      - name: 检查 Python 语法
+        working-directory: ai-service
+        run: python -m compileall -q app tests
+
+      - name: 运行轻量测试
+        working-directory: ai-service
+        run: python -m unittest discover -s tests -p "test_*.py"

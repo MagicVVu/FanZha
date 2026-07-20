@@ -1,0 +1,42 @@
+{
+  "baseline_name": "stage1_retrieval_baseline",
+  "frozen_at": "2026-04-06T15:22:00",
+  "notes": "Frozen before stage-2 hybrid retrieval and explicit second-stage rerank rollout.",
+  "kb_build_version": "20260406_151947_stage1_seed_batch3_hotfix_8b6b2e1e",
+  "seed_sha256": "8b6b2e1ec3828aa3fb4156e8e0bda2e823e2ae48d96ccfa71886c314c673fb0d",
+  "retrieval_pipeline": {
+    "pipeline_name": "stage1_dense_plus_lexical_with_signal_rerank",
+    "use_qdrant": true,
+    "min_score": 0.18,
+    "no_signal_min_score": 0.75,
+    "candidate_k_rule": "max(top_k * 4, 10)",
+    "fusion_strategy": "dense_and_lexical_merge",
+    "rerank_strategy": "signal_overlap_heuristic"
+  },
+  "eval_runs": {
+    "expanded_retrieval_cases": {
+      "run_id": "20260406_152017_retrieval_cases_20260406_151947_stage1_seed_batch3_hotfix_8b6b2e1e_stage1_seed_batch3_hotfix",
+      "summary_path": "tests/retrieval_eval_runs/20260406_152017_retrieval_cases_20260406_151947_stage1_seed_batch3_hotfix_8b6b2e1e_stage1_seed_batch3_hotfix/summary.json",
+      "metrics": {
+        "top1_type_hit": 1.0,
+        "top3_type_hit": 1.0,
+        "top1_subtype_hit": 1.0,
+        "top3_subtype_hit": 1.0,
+        "expected_empty_success": 1.0,
+        "wrong_top1": 0.0
+      }
+    },
+    "representative_120_cases": {
+      "run_id": "20260406_152103_test_cases_120_20260406_151947_stage1_seed_batch3_hotfix_8b6b2e1e_stage1_120_batch3_hotfix",
+      "summary_path": "tests/retrieval_eval_runs/20260406_152103_test_cases_120_20260406_151947_stage1_seed_batch3_hotfix_8b6b2e1e_stage1_120_batch3_hotfix/summary.json",
+      "metrics": {
+        "top1_type_hit": 0.775,
+        "top3_type_hit": 0.8,
+        "top1_subtype_hit": 0.725,
+        "top3_subtype_hit": 0.7625,
+        "expected_empty_success": 0.925,
+        "wrong_top1": 0.075
+      }
+    }
+  }
+}

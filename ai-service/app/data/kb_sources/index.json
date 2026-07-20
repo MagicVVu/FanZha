@@ -1,0 +1,38 @@
+{
+  "version": "kb_source_index_v1",
+  "updated_at": "2026-04-17",
+  "sources": [
+    {
+      "id": "faq_seed",
+      "file": "../faq_seed.json",
+      "enabled": true,
+      "knowledge_type": "faq",
+      "source": "local_seed",
+      "authority": "项目内置反诈问答"
+    },
+    {
+      "id": "regulations",
+      "file": "regulations.json",
+      "enabled": true,
+      "knowledge_type": "regulation",
+      "source": "official_regulations_curated",
+      "authority": "全国人大常委会/金融监管总局/项目整理"
+    },
+    {
+      "id": "typical_cases",
+      "file": "typical_cases.json",
+      "enabled": true,
+      "knowledge_type": "case",
+      "source": "typical_cases_curated",
+      "authority": "最高人民法院/项目整理"
+    },
+    {
+      "id": "disposal_guides",
+      "file": "disposal_guides.json",
+      "enabled": true,
+      "knowledge_type": "guide",
+      "source": "anti_fraud_guides_curated",
+      "authority": "项目内置处置指引"
+    }
+  ]
+}
