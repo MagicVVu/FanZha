@@ -1,5 +1,5 @@
-# Database
+# 数据库说明
 
-`schema.sql` defines the application-owned `users` and `fraud_news` tables. Docker Compose mounts this file into MySQL's first-start initialization directory.
+`schema.sql` 定义应用自行维护的 `users` 和 `fraud_news` 表。Docker Compose 会在 MySQL 首次启动时，将该脚本挂载到初始化目录并执行。
 
-For an existing environment, review and apply the DDL through the normal database change process. The current project does not yet use a versioned migration tool; adopting Flyway or Liquibase is listed as a roadmap item.
+对于已有环境，应先评审脚本，再按照常规数据库变更流程执行。当前项目尚未接入版本化迁移工具，后续计划引入 Flyway 或 Liquibase。

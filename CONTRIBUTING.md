@@ -1,19 +1,19 @@
-# Contributing
+# 贡献指南
 
-## Development workflow
+## 开发流程
 
-1. Create a focused branch from `main`.
-2. Keep endpoint addresses and credentials outside source control.
-3. Run `./gradlew :app:testDebugUnitTest :app:assembleDebug` for Android changes.
-4. Run `cd backend && ./mvnw -B -ntp verify` for backend changes.
-5. Describe behavior changes, permission/security impact and validation evidence in the pull request.
+1. 从 `main` 创建职责单一的开发分支。
+2. 接口地址和凭据必须保存在版本控制之外。
+3. 修改 Android 客户端后，运行 `./gradlew :app:testDebugUnitTest :app:assembleDebug`。
+4. 修改后端后，运行 `cd backend && ./mvnw -B -ntp verify`。
+5. 在拉取请求中说明行为变化、权限或安全影响，以及实际验证结果。
 
-## Engineering expectations
+## 工程要求
 
-- Keep UI, state orchestration and data access responsibilities separated.
-- Add tests for parsing, state transitions and security-data deduplication.
-- Do not add screenshots, recordings or fraud samples without confirming their license and removing personal information.
-- Any new Android permission must include a documented purpose, a user-consent flow and a graceful fallback.
-- Backend endpoints must validate input, avoid serializing persistence entities directly and document authorization requirements.
-- Crawler datasets, cookies, browser profiles and vector-store state must remain outside source control.
-- Production API traffic must use HTTPS; secrets and signing files must be stored in CI secrets or local secure storage.
+- 保持界面、状态编排与数据访问职责分离。
+- 为解析逻辑、状态变化和安全数据去重补充测试。
+- 未确认授权许可并清除个人信息前，不得提交截图、录屏或诈骗样本。
+- 新增 Android 权限时，必须说明用途，并提供用户授权流程和拒绝授权后的降级方案。
+- 后端接口必须校验输入，不得直接序列化持久化实体，并应明确说明授权要求。
+- 爬虫数据集、Cookie、浏览器配置和向量数据库运行数据不得纳入版本控制。
+- 生产 API 必须使用 HTTPS；密钥和签名文件应保存在 CI 密钥或本地安全存储中。

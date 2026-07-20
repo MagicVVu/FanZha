@@ -25,7 +25,7 @@ public class AiController {
     public ResponseEntity<AuthController.ApiResponse<String>> chat(@Valid @RequestBody ChatRequest request) {
         try {
             String content = deepSeekClient.chat(request.getSystem(), request.getPrompt(), request.getModel());
-            return ResponseEntity.ok(AuthController.ApiResponse.ok("ok", content));
+            return ResponseEntity.ok(AuthController.ApiResponse.ok("成功", content));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(AuthController.ApiResponse.fail(e.getMessage()));
         } catch (IllegalStateException e) {

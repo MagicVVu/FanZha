@@ -1,4 +1,4 @@
-name: Android CI
+name: Android 持续集成
 
 on:
   push:
@@ -14,24 +14,25 @@ concurrency:
 
 jobs:
   build-and-test:
+    name: Android 构建与测试
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
-      - name: Checkout
+      - name: 检出源码
         uses: actions/checkout@v4
 
-      - name: Set up JDK
+      - name: 配置 JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Gradle
+      - name: 配置 Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Make Gradle wrapper executable
+      - name: 设置 Gradle Wrapper 执行权限
         run: chmod +x gradlew
 
-      - name: Run unit tests and build debug APK
+      - name: 运行单元测试并构建调试 APK
         run: ./gradlew :app:testDebugUnitTest :app:assembleDebug --stacktrace

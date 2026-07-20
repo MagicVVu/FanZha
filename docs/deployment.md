@@ -1,15 +1,15 @@
-# Deployment guide
+# 部署指南
 
-## Supported components
+## 可交付组件
 
-This repository builds two deliverables:
+本仓库可以构建两个交付物：
 
-- Android application: API 27+, built with JDK 17 and the Gradle wrapper.
-- Spring Boot backend: Java 8 JAR or OCI image, backed by MySQL 8 and optionally Chroma.
+- Android 应用：支持 API 27 及以上版本，使用 JDK 17 和 Gradle Wrapper 构建。
+- Spring Boot 后端：使用 Java 8 构建 JAR 或 OCI 容器镜像，依赖 MySQL 8，并可选接入 Chroma。
 
-## Backend with Docker Compose
+## 使用 Docker Compose 启动后端
 
-Requirements: Docker Engine and Docker Compose v2.
+环境要求：Docker Engine 与 Docker Compose v2。
 
 ```bash
 git clone https://github.com/MagicVVu/FanZha.git
@@ -17,35 +17,35 @@ cd FanZha/backend
 cp .env.example .env
 ```
 
-Set unique local values for `DB_PASSWORD` and `MYSQL_ROOT_PASSWORD` in `.env`, then start:
+在 `.env` 中为 `DB_PASSWORD` 和 `MYSQL_ROOT_PASSWORD` 设置不同的本地密码，然后启动：
 
 ```bash
 docker compose up --build
 ```
 
-The stack starts:
+该环境包含：
 
-| Service | Default port | Persistence |
+| 服务 | 默认端口 | 持久化方式 |
 | --- | --- | --- |
-| Backend | `8080` | Stateless container |
-| MySQL | `3306` | `mysql-data` volume; initialized from `database/schema.sql` |
-| Chroma | `8000` | `chroma-data` volume |
+| 后端 | `8080` | 无状态容器 |
+| MySQL | `3306` | `mysql-data` 数据卷；使用 `database/schema.sql` 初始化 |
+| Chroma | `8000` | `chroma-data` 数据卷 |
 
-Verify:
+验证服务状态：
 
 ```bash
 curl http://localhost:8080/actuator/health
 ```
 
-Do not enable `ADMIN_ENDPOINTS_ENABLED` or `INGESTION_ENDPOINTS_ENABLED` on an internet-facing instance until authentication and authorization are added.
+在增加身份认证与授权前，不得在公网实例中启用 `ADMIN_ENDPOINTS_ENABLED` 或 `INGESTION_ENDPOINTS_ENABLED`。
 
-## Backend without Docker
+## 不使用 Docker 启动后端
 
-Requirements: JDK 8, Maven 3.8+ and MySQL 8.
+环境要求：JDK 8、Maven 3.8+ 和 MySQL 8。
 
-1. Create a `fanzha` database and apply `database/schema.sql`.
-2. Set `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`.
-3. Run tests and package the service:
+1. 创建 `fanzha` 数据库并执行 `database/schema.sql`。
+2. 设置 `DB_URL`、`DB_USERNAME` 和 `DB_PASSWORD`。
+3. 测试、打包并启动服务：
 
 ```bash
 cd backend
@@ -53,73 +53,73 @@ cd backend
 java -jar target/fanzha-backend.jar
 ```
 
-Optional integrations use `DEEPSEEK_API_KEY`, `CHROMA_*`, `EMBEDDING_*`, `PLAYWRIGHT_*` and crawler settings documented in `backend/README.md` and `application.yml`.
+可选集成通过 `DEEPSEEK_API_KEY`、`CHROMA_*`、`EMBEDDING_*`、`PLAYWRIGHT_*` 和爬虫相关变量配置，具体见 `backend/README.md` 与 `application.yml`。
 
-### Production backend checklist
+### 后端生产部署检查清单
 
-1. Put the service behind TLS and an authenticated gateway.
-2. Use a least-privilege MySQL account and managed secret store.
-3. Keep Actuator exposure restricted to health and required metrics.
-4. Add rate limits to login, chat and upload routes.
-5. Keep crawler cookies, proxy credentials and browser profiles outside the image.
-6. Pin and scan container images and Maven dependencies.
-7. Back up MySQL/Chroma volumes and test restoration.
-8. Introduce versioned database migrations before multi-instance rollout.
+1. 在可信代理后通过 TLS 暴露服务，并接入身份认证。
+2. 使用最小权限 MySQL 账户和托管密钥服务。
+3. 将 Actuator 限制为健康检查及必要指标。
+4. 为登录、注册、AI 对话和上传接口增加限流。
+5. 爬虫 Cookie、代理凭据和浏览器配置不得写入镜像。
+6. 固定并扫描容器镜像与 Maven 依赖。
+7. 备份 MySQL 和 Chroma 数据卷，并定期验证恢复流程。
+8. 多实例发布前接入版本化数据库迁移。
 
-## Android configuration
+## Android 客户端配置
 
-Requirements: Android SDK 36, JDK 17 and an API 27+ device/emulator.
+环境要求：Android SDK 36、JDK 17，以及 API 27 及以上的设备或模拟器。
 
-Copy the keys from `config/local.properties.example` into the ignored root `local.properties`:
+参考 `config/local.properties.example`，将所需配置写入仓库根目录被 Git 忽略的 `local.properties`：
 
 ```properties
 api.base.url=http://10.0.2.2:8080/
 ai.api.base.url=http://10.0.2.2:8080/
 ```
 
-Environment alternatives are `FANZHA_API_BASE_URL`, `FANZHA_AI_API_BASE_URL` and the development-only `FANZHA_REGISTRATION_OTP`. Properties take precedence.
+也可使用环境变量 `FANZHA_API_BASE_URL`、`FANZHA_AI_API_BASE_URL` 和仅供开发联调的 `FANZHA_REGISTRATION_OTP`。属性文件优先级更高。
 
-The local backend covers `auth/register` and `auth/login`, plus its own `/ai/chat` API. It does not yet implement the Android client's `/api/assistant/...` SSE/multimodal contract or the family/dashboard APIs.
+本地后端覆盖 `auth/register`、`auth/login` 及其自身的 `/ai/chat` 接口。Android 客户端所需的 `/api/assistant/...` SSE、多模态、家庭守护和看板接口尚未实现。
 
-Build on Windows:
+Windows 下构建：
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest :app:assembleDebug
 ```
 
-Build on macOS/Linux:
+macOS 或 Linux 下构建：
 
 ```bash
 ./gradlew :app:testDebugUnitTest :app:assembleDebug
 ```
 
-The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
+调试 APK 位于 `app/build/outputs/apk/debug/app-debug.apk`。
 
-## Release build
+## 正式版本构建
 
-Keep Android signing material outside the repository and inject it through the release environment. Increment `versionCode`, enforce HTTPS endpoints and build:
+Android 签名材料必须保存在仓库之外，并由发布环境注入。更新 `versionCode`、强制使用 HTTPS 后构建：
 
 ```bash
 ./gradlew :app:bundleRelease
 ```
 
-A public release also requires privacy-policy review for SMS, call logs, installed applications, notifications and background execution.
+公开发布前还必须审查短信、通话记录、已安装应用、通知和后台执行相关权限及隐私政策。
 
-## Verification checklist
+## 验证清单
 
-- Backend Maven tests and Android JVM tests pass.
-- Docker Compose resolves without embedded credentials.
-- `/actuator/health` is healthy after MySQL initialization.
-- Registration/login work against a clean database.
-- Optional AI and vector operations fail safely when credentials/services are absent.
-- Feature-gated upload/admin endpoints are absent by default.
-- Android permission denial leaves unrelated features usable.
-- No endpoint credential, private dataset, SDK path or signing file appears in Git diff.
+- 后端 Maven 测试与 Android JVM 测试全部通过。
+- Docker Compose 配置中不包含内嵌凭据。
+- MySQL 初始化完成后，`/actuator/health` 返回健康状态。
+- 全新数据库环境中的注册和登录正常。
+- 未配置凭据或可选服务时，AI 与向量操作能够安全失败。
+- 上传和管理接口默认不存在。
+- Android 权限被拒绝时，无关功能仍可使用。
+- Git 变更中没有接口凭据、私有数据集、SDK 路径或签名文件。
 
-## Troubleshooting
+## 常见问题
 
-- **Backend cannot validate schema:** apply `database/schema.sql` or recreate the empty Docker volume after confirming no required data exists.
-- **Android emulator cannot reach backend:** use `10.0.2.2`, not `localhost`.
-- **AI chat reports unavailable configuration:** provide `DEEPSEEK_API_KEY`; never place it in Git-tracked files.
-- **Chroma startup is slow/unavailable:** leave `CHROMA_AUTO_INIT=false` unless vector features are being exercised.
-- **Crawler returns no articles:** source anti-bot behavior changes; review network/legal constraints before enabling proxy, browser or CAPTCHA integrations.
+- **后端无法通过表结构校验：**执行 `database/schema.sql`；如果是无用的全新 Docker 数据卷，也可在确认没有数据后重建。
+- **Android 模拟器无法访问后端：**使用 `10.0.2.2`，不要使用 `localhost`。
+- **AI 对话提示配置不可用：**设置 `DEEPSEEK_API_KEY`，但不得写入 Git 跟踪文件。
+- **Chroma 启动缓慢或不可用：**不测试向量功能时，保持 `CHROMA_AUTO_INIT=false`。
+- **爬虫没有返回文章：**目标站点反爬策略可能发生变化；启用代理、浏览器或验证码功能前，应先评估网络、法律和授权要求。

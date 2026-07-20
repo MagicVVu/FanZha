@@ -1,4 +1,4 @@
-name: Backend CI
+name: 后端持续集成
 
 on:
   push:
@@ -22,14 +22,15 @@ concurrency:
 
 jobs:
   build-and-test:
+    name: 后端构建与测试
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
-      - name: Checkout
+      - name: 检出源码
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: 配置 Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -37,9 +38,9 @@ jobs:
           cache: maven
           cache-dependency-path: backend/pom.xml
 
-      - name: Make Maven wrapper executable
+      - name: 设置 Maven Wrapper 执行权限
         run: chmod +x backend/mvnw
 
-      - name: Build and test
+      - name: 构建并运行测试
         working-directory: backend
         run: ./mvnw -B -ntp verify

@@ -1,100 +1,100 @@
-# System architecture
+# 系统架构
 
-## Scope and boundaries
+## 范围与边界
 
-FanZha is a monorepo containing an Android client and a Spring Boot backend. The two projects share the anti-fraud domain but do not yet have complete API parity: registration/login are compatible at the path and envelope level; the Android assistant, family, dashboard, ingest and alert contracts exceed the current backend surface.
+反诈通采用单仓库结构，包含 Android 客户端和 Spring Boot 后端。两者共享反诈业务领域，但接口尚未完全对齐：注册和登录在路径及响应结构层面兼容；Android 助手、家庭守护、风险看板、数据上报和风险指令所需的契约超出当前后端能力范围。
 
-This distinction is intentional in the documentation: implemented code is separated from planned integration work.
+文档会明确区分已实现代码与后续集成计划，避免把尚未存在的能力描述为已交付功能。
 
-## System context
+## 系统关系
 
 ```mermaid
 flowchart TB
-    USER["User"] --> APP["FanZha Android app"]
-    DEVICE["Android system data"] -->|"runtime permission + consent"| APP
-    APP -->|"auth REST subset"| API["Spring Boot backend"]
-    APP -. "unimplemented contract" .-> ADAPTER["Future assistant/core API adapter"]
-    API --> MYSQL["MySQL: users and fraud_news"]
-    API --> MODEL["DeepSeek-compatible model API"]
-    API --> EMBED["BGE embedding HTTP service"]
-    API --> CHROMA["Chroma vector store"]
-    CRAWL["Configured public sources"] --> ETL["Crawler and ETL pipeline"]
+    USER["用户"] --> APP["反诈通 Android 应用"]
+    DEVICE["Android 系统数据"] -->|"运行时权限与用户授权"| APP
+    APP -->|"注册登录 REST 子集"| API["Spring Boot 后端"]
+    APP -. "待实现契约" .-> ADAPTER["未来的助手与核心 API 适配层"]
+    API --> MYSQL["MySQL：用户与反诈资讯"]
+    API --> MODEL["DeepSeek 兼容模型接口"]
+    API --> EMBED["BGE 向量化 HTTP 服务"]
+    API --> CHROMA["Chroma 向量数据库"]
+    CRAWL["配置的公开数据源"] --> ETL["爬虫与 ETL 流水线"]
     ETL --> API
 ```
 
-External model, embedding and vector services are optional. Safe defaults keep automatic ETL, crawling, Chroma initialization and privileged HTTP endpoints disabled.
+外部模型、向量化和向量数据库服务均为可选依赖。安全默认配置会关闭自动 ETL、爬虫、Chroma 启动初始化和高权限 HTTP 接口。
 
-## Android architecture
+## Android 客户端架构
 
-| Layer | Responsibility | Key packages |
+| 层级 | 职责 | 主要包 |
 | --- | --- | --- |
-| Presentation | Compose screens, reusable components and accessibility themes | `ui/screens`, `ui/components`, `ui/theme` |
-| State orchestration | User actions, loading/error state and result aggregation | `ui/viewmodels` |
-| Domain | Security index and risk rules | `domain` |
-| Data | DTOs, Retrofit contracts, repositories and preferences | `data/model`, `data/remote`, `data/repository`, `data/local` |
-| Device integration | OCR, content collection, notifications and receivers | `security`, `sms`, `notifications`, `util` |
+| 展示层 | Compose 页面、通用组件和无障碍主题 | `ui/screens`、`ui/components`、`ui/theme` |
+| 状态编排 | 用户操作、加载与错误状态、结果聚合 | `ui/viewmodels` |
+| 领域层 | 安全指数计算和风险规则 | `domain` |
+| 数据层 | DTO、Retrofit 契约、仓储和偏好设置 | `data/model`、`data/remote`、`data/repository`、`data/local` |
+| 设备集成 | OCR、内容采集、通知和广播接收 | `security`、`sms`、`notifications`、`util` |
 
-The intended dependency direction is `UI -> ViewModel -> repository -> remote/local`. Some dependency construction remains in the application module and is a refactoring target.
+预期依赖方向为 `界面 -> ViewModel -> 仓储 -> 远程或本地数据源`。部分依赖创建逻辑仍集中在应用模块中，后续需要重构。
 
-## Backend architecture
+## 后端架构
 
-| Layer | Responsibility | Key packages |
+| 层级 | 职责 | 主要包 |
 | --- | --- | --- |
-| API | Request validation, response envelope and feature gating | `controller` |
-| Application services | Authentication, ingestion, crawling, cleaning and ETL orchestration | `service` |
-| Integration | DeepSeek, BGE, Chroma, Milvus, OSS, Playwright and HTTP clients | `util`, `service/chroma`, `service/fraud` |
-| Persistence | JPA accounts and JDBC anti-fraud news storage | `dao`, `entity`, `service/fraud/storage` |
-| Configuration | Typed properties, CORS, OpenAPI and infrastructure beans | `config` |
+| 接口层 | 请求校验、统一响应和功能开关 | `controller` |
+| 应用服务层 | 身份认证、资料入库、抓取、清洗与 ETL 编排 | `service` |
+| 外部集成层 | DeepSeek、BGE、Chroma、Milvus、OSS、Playwright 与 HTTP 客户端 | `util`、`service/chroma`、`service/fraud` |
+| 持久化层 | JPA 用户账户和 JDBC 反诈资讯存储 | `dao`、`entity`、`service/fraud/storage` |
+| 配置层 | 类型化配置、跨域、OpenAPI 和基础设施 Bean | `config` |
 
-### Anti-fraud ETL flow
+### 反诈资讯 ETL 流程
 
 ```mermaid
 sequenceDiagram
-    participant S as Scheduler/Admin trigger
-    participant C as Source crawler
-    participant F as Filter and cleaner
-    participant L as LLM extractor
+    participant S as 定时器或管理触发器
+    participant C as 数据源爬虫
+    participant F as 过滤与清洗模块
+    participant L as 大模型抽取器
     participant DB as MySQL
-    participant E as BGE embedding
+    participant E as BGE 向量化服务
     participant V as Chroma
-    S->>C: Start bounded crawl
-    C->>F: Article candidates
-    F->>F: Time, keyword, quality and hash checks
-    opt extraction enabled
-        F->>L: Structured fraud-case extraction
-        L-->>F: Tags, confidence and analysis
+    S->>C: 启动有界抓取任务
+    C->>F: 文章候选项
+    F->>F: 时间、关键词、质量与哈希检查
+    opt 已启用结构化抽取
+        F->>L: 抽取结构化诈骗案例
+        L-->>F: 标签、置信度与分析结果
     end
-    F->>DB: Idempotent upsert by URL/content hash
-    opt embedding available
-        F->>E: Generate vector
-        E-->>F: Embedding
-        F->>V: Upsert document and metadata
+    F->>DB: 按 URL 与内容哈希幂等写入
+    opt 向量化服务可用
+        F->>E: 生成向量
+        E-->>F: 返回 Embedding
+        F->>V: 写入文档与元数据
     end
 ```
 
-The repository includes two ETL paths: `KnowledgeBaseEtlService` for the earlier Baidu/DeepSeek/Chroma flow and `FraudNewsEtlService` for configurable multi-source collection and richer persistence. Both are disabled by default. Consolidation into one job model is recommended.
+仓库中保留两条 ETL 路径：`KnowledgeBaseEtlService` 用于早期的百度、DeepSeek 与 Chroma 流程；`FraudNewsEtlService` 用于可配置多数据源采集和更完整的持久化。两者默认都关闭，后续建议统一为一套任务模型。
 
-## Authentication and trust boundary
+## 身份认证与信任边界
 
-Passwords are stored as BCrypt hashes with compatibility migration for legacy salted SHA-256 records. The current login response returns user identity but no access token. Therefore:
+密码使用成本因子为 12 的 BCrypt 哈希保存；旧版加盐 SHA-256 记录会在成功登录后自动迁移。当前登录响应只返回用户身份信息，不签发访问令牌。因此：
 
-- account endpoints are suitable for integration development, not a complete production identity system;
-- ingestion and admin controllers require explicit feature flags and must remain behind a trusted network;
-- callers cannot treat a user ID as proof of identity;
-- API gateway authentication, application authorization and rate limiting remain required.
+- 账户接口适合联调开发，但不构成完整的生产身份系统；
+- 资料入库和管理控制器必须通过显式开关启用，并限制在可信网络中；
+- 调用方不得将用户 ID 视为身份凭证；
+- 仍需补充 API 网关认证、应用层授权和限流。
 
-## Configuration boundary
+## 配置边界
 
-Android service addresses come from ignored `local.properties` values or environment variables. Backend secrets and environment-specific values come from environment variables referenced by `application.yml`; `.env.example` contains names only.
+Android 服务地址来自被 Git 忽略的 `local.properties` 或环境变量。后端密钥和环境差异配置来自 `application.yml` 引用的环境变量；`.env.example` 只保留变量名称和安全示例。
 
-Runtime datasets, crawler checkpoints, browser profiles and vector database files are outside source control. The committed `database/schema.sql` is the auditable baseline for application tables.
+运行数据集、爬虫检查点、浏览器用户目录和向量数据库文件均位于版本控制之外。仓库中的 `database/schema.sql` 是应用表结构的可审查基线。
 
-## Known limitations
+## 已知限制
 
-- Android SSE/multimodal assistant paths are not implemented by the backend.
-- Family, profile, interception dashboard and risk-command endpoints exist only as Android contracts.
-- The backend has no JWT/session issuance or role-based authorization.
-- Schema changes are not yet versioned with Flyway or Liquibase.
-- Manual ETL currently starts an in-process daemon thread rather than a durable job.
-- Milvus code is present but the active ETL pipeline uses Chroma.
-- Some Android learning/report screens use bundled or local content.
+- 后端尚未实现 Android 所需的 SSE 与多模态助手接口。
+- 家庭守护、用户资料、拦截看板和风险指令目前只有 Android 契约。
+- 后端尚未签发 JWT 或会话，也没有角色授权。
+- 数据库变更尚未通过 Flyway 或 Liquibase 进行版本化管理。
+- 手动 ETL 仍使用进程内守护线程，不是持久化任务。
+- Milvus 代码已经保留，但当前 ETL 主链路使用 Chroma。
+- 部分 Android 学习与报告页面仍使用内置或本地内容。

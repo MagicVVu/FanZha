@@ -1,12 +1,12 @@
-# Copy the required keys to <project-root>/local.properties.
-# Android Studio will add sdk.dir automatically.
+# 将所需配置复制到 <project-root>/local.properties。
+# Android Studio 会自动添加 sdk.dir。
 
-# Core business APIs: authentication, profile, family and interception data.
+# 核心业务 API：身份认证、用户资料、家庭守护与拦截数据。
 api.base.url=https://api.example.com/
 
-# AI APIs: multimodal analysis, assistant chat, SSE and report advice.
+# AI API：多模态分析、助手对话、SSE 与举报建议。
 ai.api.base.url=https://ai.example.com/
 
-# Local integration only. Do not use a client-side OTP in production.
-# The production registration flow must verify OTP on the server.
+# 仅用于本地联调，生产环境不得使用客户端内置验证码。
+# 生产注册流程必须由服务端校验验证码。
 registration.otp=

@@ -1,5 +1,5 @@
-# Runtime data
+# 运行数据目录
 
-This directory is reserved for crawler checkpoints, optional locally sourced corpora and Playwright session data. Runtime files are intentionally excluded from Git because they may contain third-party content, cookies or machine-specific state.
+本目录用于存放爬虫检查点、可选的本地语料和 Playwright 会话数据。这些运行文件可能包含第三方内容、Cookie 或设备相关状态，因此不会纳入 Git。
 
-Keep datasets outside the repository and reference them through deployment-specific configuration. Review source licenses and remove personal data before ingestion.
+数据集应保存在仓库之外，并通过部署环境的配置进行引用。入库前必须确认数据来源许可并清除个人信息。

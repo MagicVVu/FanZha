@@ -1,59 +1,59 @@
-# Security and privacy
+# 安全与隐私
 
-FanZha may process communications, account identifiers, uploaded content, device metadata and model prompts. A successful build is not evidence that the system is ready for public distribution.
+反诈通可能处理通信内容、账户标识、上传内容、设备元数据和模型提示词。项目能够成功构建，并不代表系统已经满足公开发布要求。
 
-## Existing safeguards
+## 已有安全措施
 
-**Android**
+**Android 客户端**
 
-- Device collection starts behind an in-app consent gate and runtime permissions.
-- Unavailable sources are skipped instead of blocking unrelated features.
-- SMS/call ingestion uses timestamp watermarks; clipboard and app uploads are deduplicated.
-- HTTP body logging is disabled in release builds.
-- Local configuration and signing material are ignored by Git.
+- 设备数据采集需要经过应用内授权说明和运行时权限检查。
+- 无法访问的数据源会被跳过，不会阻塞无关功能。
+- 短信和通话数据使用时间水位去重；剪贴板与应用信息也会避免重复上传。
+- 正式版本关闭 HTTP 请求正文日志。
+- 本地配置和签名材料不会纳入 Git。
 
-**Backend**
+**后端服务**
 
-- Passwords are encoded with BCrypt cost 12; legacy salted SHA-256 values are rehashed after a successful login.
-- Database, model, OSS, proxy and crawler credentials are environment-based.
-- Browser origins default to localhost patterns rather than a global wildcard.
-- Crawler, scheduled extraction, Chroma startup initialization, ingestion and admin endpoints are disabled by default.
-- Docker runs the application as a non-root user.
-- Runtime datasets, crawler checkpoints, Playwright profiles and vector files are excluded from source control.
+- 密码使用成本因子为 12 的 BCrypt 编码；旧版加盐 SHA-256 记录会在成功登录后重新编码。
+- 数据库、模型、OSS、代理与爬虫凭据通过环境变量注入。
+- 浏览器跨域来源默认仅允许本机地址，不使用全局通配符。
+- 爬虫、定时抽取、Chroma 启动初始化、资料入库和管理接口默认关闭。
+- Docker 容器使用非 root 用户运行应用。
+- 运行数据集、爬虫检查点、Playwright 配置和向量数据库文件不会纳入版本控制。
 
-## Current security gaps
+## 当前安全缺口
 
-- Login does not issue an access/refresh token; endpoint authorization is not implemented.
-- AI chat can consume a paid upstream API and has no application-level rate limit.
-- Upload and admin routes must not be enabled on a public network without an authenticated control plane.
-- Manual jobs run in-process and do not have durable ownership, audit or cancellation semantics.
-- The Android client stores some state in ordinary SharedPreferences.
-- Full data retention, export and deletion workflows are not implemented.
-- External crawler targets can change behavior or terms; operators must assess legality, robots policy and content licensing.
+- 登录尚未签发访问令牌或刷新令牌，接口授权尚未实现。
+- AI 对话会消耗计费模型额度，但当前没有应用层限流。
+- 在缺少可信认证控制面的情况下，不得向公网开放上传和管理接口。
+- 手动任务在应用进程内运行，尚未实现持久化归属、审计和取消机制。
+- Android 客户端仍有部分状态保存在普通 SharedPreferences 中。
+- 尚未完整实现数据保留、导出和删除流程。
+- 外部爬虫目标的行为和条款可能变化，运营方必须审查合法性、robots 规则和内容授权。
 
-## Sensitive Android permissions
+## Android 敏感权限
 
-| Permission | Purpose | Required safeguard |
+| 权限 | 用途 | 必要保护措施 |
 | --- | --- | --- |
-| `READ_SMS` / `RECEIVE_SMS` | Suspicious SMS detection | Explicit consent, minimization and graceful denial |
-| `READ_CALL_LOG` | Suspicious call analysis | Purpose limitation and retention controls |
-| `QUERY_ALL_PACKAGES` | Suspicious-app checks | Store-policy justification and narrow alternatives |
-| `POST_NOTIFICATIONS` | Risk alerts | Android 13+ runtime request |
-| `SCHEDULE_EXACT_ALARM` | Scheduled risk polling | Battery/policy review and push-based replacement |
-| `RECEIVE_BOOT_COMPLETED` | Restore scheduled checks | Visible user control to disable monitoring |
+| `READ_SMS` / `RECEIVE_SMS` | 识别可疑短信 | 明确授权、数据最小化和拒绝后的降级方案 |
+| `READ_CALL_LOG` | 分析可疑通话 | 用途限制和保留周期控制 |
+| `QUERY_ALL_PACKAGES` | 检查可疑应用 | 应用商店政策说明和更窄权限替代方案 |
+| `POST_NOTIFICATIONS` | 发送风险提醒 | Android 13 及以上运行时申请 |
+| `SCHEDULE_EXACT_ALARM` | 定时风险轮询 | 电量与政策审查，并规划推送替代方案 |
+| `RECEIVE_BOOT_COMPLETED` | 重启后恢复定时检查 | 提供清晰的用户关闭入口 |
 
-## Production requirements
+## 生产部署要求
 
-1. Add token issuance, rotation, revocation, role-based authorization and object ownership checks.
-2. Terminate TLS at a trusted proxy and restrict Actuator/admin routes by network and identity.
-3. Add rate limits, request IDs, audit events and stable error codes.
-4. Scan uploads in isolation; enforce allowlisted types, decompression limits and retention policies.
-5. Store secrets in a managed secret service and use a least-privilege database account.
-6. Encrypt sensitive local/client data and backups; document retention and deletion SLAs.
-7. Publish a privacy policy listing fields, purposes, recipients, retention and withdrawal routes.
-8. Threat-model exported Android components, replay, tampered clients, prompt injection, SSRF, log disclosure and malicious archives.
-9. Review Google Play and target-market rules for communications, application inventory and background execution.
+1. 增加令牌签发、轮换、撤销、角色授权和资源所有权检查。
+2. 在可信代理终止 TLS，并按网络与身份限制 Actuator 和管理接口。
+3. 增加限流、请求 ID、审计事件和稳定错误码。
+4. 隔离扫描上传内容，并限制类型、解压规模和保留周期。
+5. 使用托管密钥服务和最小权限数据库账户。
+6. 加密敏感客户端数据和备份，并明确保留与删除时限。
+7. 发布隐私政策，说明字段、用途、接收方、保留周期和撤回方式。
+8. 对 Android 导出组件、重放攻击、客户端篡改、提示词注入、SSRF、日志泄露和恶意压缩包进行威胁建模。
+9. 审查 Google Play 及目标市场对通信数据、应用清单和后台执行的政策要求。
 
-## Secret incident handling
+## 密钥泄露处理
 
-Never commit API keys, private keys, database passwords, cookies or signing identities. If a secret reaches Git, revoke or rotate it first; deleting the visible line or rewriting history alone does not make the credential safe.
+不得提交 API Key、私钥、数据库密码、Cookie 或签名身份。如果密钥进入 Git，应先立即撤销或轮换；只删除可见内容或重写历史并不能保证凭据安全。

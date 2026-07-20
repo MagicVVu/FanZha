@@ -21,6 +21,6 @@ public class AdminEtlController {
         Thread worker = new Thread(knowledgeBaseEtlService::runEtlJob, "knowledge-etl-manual");
         worker.setDaemon(true);
         worker.start();
-        return ResponseEntity.accepted().body(AuthController.ApiResponse.ok("accepted", "ETL started"));
+        return ResponseEntity.accepted().body(AuthController.ApiResponse.ok("任务已接受", "ETL 已启动"));
     }
 }

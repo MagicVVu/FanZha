@@ -12,7 +12,8 @@ public class SwaggerConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("HouDuan API")
+                        .title("反诈通后端 API")
+                        .description("反诈通账户、AI 对话、资料入库与反诈资讯 ETL 接口")
                         .version("v1"));
     }
 }

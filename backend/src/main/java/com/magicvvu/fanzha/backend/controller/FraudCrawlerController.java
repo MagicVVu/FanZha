@@ -20,7 +20,7 @@ public class FraudCrawlerController {
         Thread t = new Thread(fraudNewsEtlService::runOnce);
         t.setDaemon(true);
         t.start();
-        return ResponseEntity.ok(AuthController.ApiResponse.ok("ok", "crawler started"));
+        return ResponseEntity.ok(AuthController.ApiResponse.ok("成功", "爬虫任务已启动"));
     }
 
 }

@@ -1,14 +1,14 @@
-# Android application module
+# Android 应用模块
 
-`app` is the FanZha Android client. It contains the Compose UI, view models, local persistence, Retrofit contracts, multimodal request orchestration, local OCR and device-side risk collection.
+`app` 是反诈通 Android 客户端，包含 Compose 界面、视图模型、本地持久化、Retrofit 接口契约、多模态请求编排、本地 OCR 和设备侧风险信息采集。
 
-Main packages:
+主要包结构：
 
-- `data`: local persistence, API contracts, models and repositories
-- `domain`: security-index calculation
-- `security`: consent-aware SMS, call-log, clipboard and installed-app collection
-- `notifications`: risk polling and local notification coordination
-- `ui`: Compose screens, components, state holders and themes
-- `util`: OCR, media and Android utility code
+- `data`：本地持久化、API 契约、数据模型和仓储
+- `domain`：安全指数计算
+- `security`：经用户授权的短信、通话记录、剪贴板和已安装应用采集
+- `notifications`：风险指令轮询与本地通知协调
+- `ui`：Compose 页面、组件、状态持有者和主题
+- `util`：OCR、媒体处理与 Android 工具代码
 
-The server implementation is intentionally not represented in this module. See `../docs/api.md` for the client contract and `../docs/architecture.md` for system boundaries.
+服务端实现不属于本模块。客户端接口契约见 `../docs/api.md`，系统边界见 `../docs/architecture.md`。

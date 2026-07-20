@@ -1,98 +1,98 @@
-# API reference and compatibility matrix
+# API 参考与兼容性矩阵
 
-The backend publishes its generated OpenAPI document at `/v3/api-docs` and Swagger UI at `/swagger-ui.html`. This document records the source-level contract and distinguishes it from Android-only expectations.
+后端运行后，会在 `/v3/api-docs` 提供自动生成的 OpenAPI 文档，并在 `/swagger-ui.html` 提供 Swagger UI。本文件记录源码中的接口契约，并将其与仅存在于 Android 客户端中的接口需求区分开。
 
-## Response envelope
+## 响应结构
 
-Most implemented endpoints use:
+多数已实现接口采用以下响应结构：
 
 ```json
 {
   "success": true,
-  "message": "ok",
+  "message": "成功",
   "data": {}
 }
 ```
 
-Stable machine-readable error codes, trace IDs and token authentication are not implemented yet.
+稳定的机器可读错误码、链路追踪 ID 和令牌认证尚未实现。
 
-## Implemented backend endpoints
+## 已实现的后端接口
 
-### Authentication
+### 身份认证
 
-| Method | Path | Request | Notes |
+| 方法 | 路径 | 请求字段 | 说明 |
 | --- | --- | --- | --- |
-| `POST` | `/auth/register` | `account`, `password`, optional `confirmPassword` | Account must be an email or mainland China mobile number |
-| `POST` | `/auth/login` | `account`, `password` | Returns user identity; does not issue a token |
+| `POST` | `/auth/register` | `account`、`password`，可选 `confirmPassword` | 账户必须是邮箱或中国大陆手机号 |
+| `POST` | `/auth/login` | `account`、`password` | 返回用户身份信息，但不签发令牌 |
 
-Unknown extra registration fields sent by the Android client are not persisted by this endpoint.
+Android 客户端发送的其他注册字段不会由该接口持久化。
 
-### AI chat
+### AI 对话
 
-| Method | Path | Request | Notes |
+| 方法 | 路径 | 请求字段 | 说明 |
 | --- | --- | --- | --- |
-| `POST` | `/ai/chat` | `prompt`, optional `system`, optional `model` | Non-streaming DeepSeek-compatible completion |
+| `POST` | `/ai/chat` | `prompt`，可选 `system`、`model` | DeepSeek 兼容的非流式对话 |
 
-`DEEPSEEK_API_KEY` is required at runtime. This endpoint is not the Android SSE assistant contract.
+运行时必须配置 `DEEPSEEK_API_KEY`。该接口不等同于 Android 客户端要求的 SSE 助手接口。
 
-### Ingestion (disabled by default)
+### 资料入库接口（默认关闭）
 
-Set `INGESTION_ENDPOINTS_ENABLED=true` to register these endpoints.
+设置 `INGESTION_ENDPOINTS_ENABLED=true` 后，才会注册以下接口。
 
-| Method | Path | Request | Notes |
+| 方法 | 路径 | 请求 | 说明 |
 | --- | --- | --- | --- |
-| `POST` | `/upload` | multipart field `files` | Up to 200 files; parser support depends on format |
-| `POST` | `/upload/text` | JSON field `content` | Normalizes encoding, masks sensitive content and returns a fingerprint summary |
+| `POST` | `/upload` | multipart 字段 `files` | 最多 200 个文件，支持格式由解析器决定 |
+| `POST` | `/upload/text` | JSON 字段 `content` | 统一编码、脱敏，并返回指纹摘要 |
 
-The current ingestion response reports processing metadata; it is not the Android device-risk ingest API.
+当前入库响应只返回处理元数据，不属于 Android 设备风险数据上报接口。
 
-### Operations (disabled by default)
+### 运维接口（默认关闭）
 
-Set `ADMIN_ENDPOINTS_ENABLED=true` only behind a trusted control plane.
+只有在可信控制网络中，才应设置 `ADMIN_ENDPOINTS_ENABLED=true`。
 
-| Method | Path | Effect |
+| 方法 | 路径 | 作用 |
 | --- | --- | --- |
-| `POST` | `/admin/etl/knowledge/run` | Starts the configured knowledge ETL |
-| `POST` | `/admin/crawler/run` | Starts one anti-fraud news crawl |
+| `POST` | `/admin/etl/knowledge/run` | 启动配置的知识库 ETL |
+| `POST` | `/admin/crawler/run` | 启动一次反诈资讯抓取 |
 
-These operations currently start in-process daemon threads and do not expose durable job IDs.
+这些操作当前使用进程内守护线程执行，尚未返回持久化任务 ID。
 
-### Platform endpoints
+### 平台接口
 
-| Method | Path | Purpose |
+| 方法 | 路径 | 用途 |
 | --- | --- | --- |
-| `GET` | `/actuator/health` | Service/dependency health |
-| `GET` | `/actuator/prometheus` | Prometheus metrics |
-| `GET` | `/v3/api-docs` | Generated OpenAPI JSON |
+| `GET` | `/actuator/health` | 服务与依赖健康状态 |
+| `GET` | `/actuator/prometheus` | Prometheus 指标 |
+| `GET` | `/v3/api-docs` | 自动生成的 OpenAPI JSON |
 
-## Android client contracts not implemented by this backend
+## 当前后端尚未实现的 Android 接口
 
-| Contract group | Android paths | Backend status |
+| 契约分组 | Android 路径 | 后端状态 |
 | --- | --- | --- |
-| User profile | `user/profile`, `user/occupations`, `user/security-score` | Not implemented |
-| Family | `family/member/add`, `family/member/list` | Not implemented |
-| Interception | `intercept/...`, `intercept/ingest/batch` | Not implemented |
-| Alert commands | `api/alerts/commands/...` | Not implemented |
-| Quiz | `quiz/score` | Not implemented |
-| Streaming assistant | `api/assistant/chat/stream...` | Not implemented |
-| Multimodal analysis | `api/assistant/analyze`, `check-sms`, `report/advice` | Not implemented |
+| 用户资料 | `user/profile`、`user/occupations`、`user/security-score` | 未实现 |
+| 家庭守护 | `family/member/add`、`family/member/list` | 未实现 |
+| 风险拦截 | `intercept/...`、`intercept/ingest/batch` | 未实现 |
+| 风险指令 | `api/alerts/commands/...` | 未实现 |
+| 答题积分 | `quiz/score` | 未实现 |
+| 流式助手 | `api/assistant/chat/stream...` | 未实现 |
+| 多模态分析 | `api/assistant/analyze`、`check-sms`、`report/advice` | 未实现 |
 
-The Android SSE parser expects `start`, `delta` and `done` events with session, suggestion and risk metadata. `/ai/chat` returns one JSON response and cannot be substituted without an adapter.
+Android SSE 解析器要求服务端发送 `start`、`delta` 和 `done` 事件，并携带会话、建议和风险元数据。`/ai/chat` 只返回一次性 JSON 响应，不能直接替代这些接口。
 
-## Security contract
+## 安全约束
 
-The code does not demonstrate bearer-token or refresh-token handling. Until this exists:
+当前代码尚未实现 Bearer Token 或刷新令牌。在完善身份体系前：
 
-- do not use a user ID as proof of ownership;
-- keep admin and ingestion endpoints disabled or network-isolated;
-- rate-limit registration, login and AI chat externally;
-- bound multipart size and content types at both proxy and application layers;
-- treat all model outputs as advisory and validate their structure.
+- 不得把用户 ID 当作资源所有权证明；
+- 管理和资料入库接口应保持关闭或限制在可信网络内；
+- 应在外层网关限制注册、登录和 AI 对话频率；
+- 代理层和应用层都应限制上传大小与媒体类型；
+- 模型输出必须视为辅助建议，并校验其结构和取值范围。
 
-## Recommended evolution
+## 后续演进建议
 
-1. Introduce a versioned `/api/v1` surface and consistent error codes.
-2. Add access/refresh tokens and per-resource authorization.
-3. Implement an adapter matching the Android assistant DTOs and SSE events.
-4. Add OpenAPI contract tests to both Gradle and Maven CI.
-5. Add idempotency keys for ingestion and durable job resources for ETL.
+1. 引入版本化的 `/api/v1` 接口和统一错误码。
+2. 增加访问令牌、刷新令牌和资源级授权。
+3. 实现与 Android 助手 DTO 和 SSE 事件一致的适配层。
+4. 在 Gradle 与 Maven CI 中增加 OpenAPI 契约测试。
+5. 为数据入库增加幂等键，为 ETL 提供持久化任务资源。
