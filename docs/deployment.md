@@ -1,89 +1,125 @@
 # Deployment guide
 
-## Supported target
+## Supported components
 
-This repository builds an Android application. It does not deploy the external core API, AI service, database or vector store.
+This repository builds two deliverables:
 
-## Requirements
+- Android application: API 27+, built with JDK 17 and the Gradle wrapper.
+- Spring Boot backend: Java 8 JAR or OCI image, backed by MySQL 8 and optionally Chroma.
 
-- Android Studio with Android SDK Platform 36 and Build Tools
-- JDK 17+
-- Android 8.1 / API 27 or newer device or emulator
-- Network access to Google Maven, Maven Central and JitPack for a clean dependency restore
+## Backend with Docker Compose
 
-## Local configuration
+Requirements: Docker Engine and Docker Compose v2.
 
-Android Studio creates `local.properties` with `sdk.dir`. Add the application settings below using `config/local.properties.example` as the source:
-
-```properties
-api.base.url=https://api.example.com/
-ai.api.base.url=https://ai.example.com/
+```bash
+git clone https://github.com/MagicVVu/FanZha.git
+cd FanZha/backend
+cp .env.example .env
 ```
 
-The endpoints must include a scheme. A trailing slash is added by the build script when absent. If no URL is supplied, the debug build targets `http://10.0.2.2:8080/`, which maps an Android emulator to the development host.
+Set unique local values for `DB_PASSWORD` and `MYSQL_ROOT_PASSWORD` in `.env`, then start:
 
-Environment variable alternatives:
+```bash
+docker compose up --build
+```
 
-| Variable | Purpose |
-| --- | --- |
-| `FANZHA_API_BASE_URL` | Core business service |
-| `FANZHA_AI_API_BASE_URL` | AI and streaming service |
-| `FANZHA_REGISTRATION_OTP` | Local integration only; never a production OTP mechanism |
+The stack starts:
 
-Properties in `local.properties` take precedence over environment variables.
+| Service | Default port | Persistence |
+| --- | --- | --- |
+| Backend | `8080` | Stateless container |
+| MySQL | `3306` | `mysql-data` volume; initialized from `database/schema.sql` |
+| Chroma | `8000` | `chroma-data` volume |
 
-## Build
+Verify:
 
-Windows:
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+Do not enable `ADMIN_ENDPOINTS_ENABLED` or `INGESTION_ENDPOINTS_ENABLED` on an internet-facing instance until authentication and authorization are added.
+
+## Backend without Docker
+
+Requirements: JDK 8, Maven 3.8+ and MySQL 8.
+
+1. Create a `fanzha` database and apply `database/schema.sql`.
+2. Set `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`.
+3. Run tests and package the service:
+
+```bash
+cd backend
+./mvnw -B -ntp clean verify
+java -jar target/fanzha-backend.jar
+```
+
+Optional integrations use `DEEPSEEK_API_KEY`, `CHROMA_*`, `EMBEDDING_*`, `PLAYWRIGHT_*` and crawler settings documented in `backend/README.md` and `application.yml`.
+
+### Production backend checklist
+
+1. Put the service behind TLS and an authenticated gateway.
+2. Use a least-privilege MySQL account and managed secret store.
+3. Keep Actuator exposure restricted to health and required metrics.
+4. Add rate limits to login, chat and upload routes.
+5. Keep crawler cookies, proxy credentials and browser profiles outside the image.
+6. Pin and scan container images and Maven dependencies.
+7. Back up MySQL/Chroma volumes and test restoration.
+8. Introduce versioned database migrations before multi-instance rollout.
+
+## Android configuration
+
+Requirements: Android SDK 36, JDK 17 and an API 27+ device/emulator.
+
+Copy the keys from `config/local.properties.example` into the ignored root `local.properties`:
+
+```properties
+api.base.url=http://10.0.2.2:8080/
+ai.api.base.url=http://10.0.2.2:8080/
+```
+
+Environment alternatives are `FANZHA_API_BASE_URL`, `FANZHA_AI_API_BASE_URL` and the development-only `FANZHA_REGISTRATION_OTP`. Properties take precedence.
+
+The local backend covers `auth/register` and `auth/login`, plus its own `/ai/chat` API. It does not yet implement the Android client's `/api/assistant/...` SSE/multimodal contract or the family/dashboard APIs.
+
+Build on Windows:
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest :app:assembleDebug
 ```
 
-macOS or Linux:
+Build on macOS/Linux:
 
 ```bash
 ./gradlew :app:testDebugUnitTest :app:assembleDebug
 ```
 
-Expected output:
-
-```text
-app/build/outputs/apk/debug/app-debug.apk
-```
-
-Install to a connected device:
-
-```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
+The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
 
 ## Release build
 
-Create and retain a release keystore outside the repository. Never commit `.jks`, `.keystore` or `keystore.properties` files. Configure signing through Android Studio or CI secrets, increment `versionCode`, and build an App Bundle:
+Keep Android signing material outside the repository and inject it through the release environment. Increment `versionCode`, enforce HTTPS endpoints and build:
 
 ```bash
 ./gradlew :app:bundleRelease
 ```
 
-The repository intentionally contains no signing identity. A production release should also enforce HTTPS endpoints, review logging, publish a privacy policy and validate all sensitive permission flows.
+A public release also requires privacy-policy review for SMS, call logs, installed applications, notifications and background execution.
 
 ## Verification checklist
 
-1. Gradle sync and unit tests complete successfully.
-2. The app opens on API 27 and the current target API.
-3. Login and profile calls reach the core service.
-4. Text analysis and SSE assistant calls reach the AI service.
-5. Denying SMS or call-log permissions leaves unrelated features usable.
-6. Consent is requested before device data collection starts.
-7. Notification behavior is tested on Android 13+.
-8. No endpoint, credential, SDK path or signing file appears in the Git diff.
+- Backend Maven tests and Android JVM tests pass.
+- Docker Compose resolves without embedded credentials.
+- `/actuator/health` is healthy after MySQL initialization.
+- Registration/login work against a clean database.
+- Optional AI and vector operations fail safely when credentials/services are absent.
+- Feature-gated upload/admin endpoints are absent by default.
+- Android permission denial leaves unrelated features usable.
+- No endpoint credential, private dataset, SDK path or signing file appears in Git diff.
 
 ## Troubleshooting
 
-- **Gradle cannot resolve dependencies:** verify access to `services.gradle.org`, Google Maven, Maven Central and JitPack.
-- **Emulator cannot reach a local service:** bind the service to an accessible interface and use `10.0.2.2`, not `localhost`.
-- **Retrofit rejects the base URL:** include `http://` or `https://`; the build adds the trailing slash.
-- **HTTP traffic is blocked:** cleartext is derived from configured URLs. Use HTTPS for production; use HTTP only for controlled development.
-- **SMS/call features are unavailable:** confirm device capability, runtime permissions and platform policy restrictions.
-- **SSE never completes:** verify that the proxy and server do not buffer event streams and that the AI endpoint emits valid SSE frames.
+- **Backend cannot validate schema:** apply `database/schema.sql` or recreate the empty Docker volume after confirming no required data exists.
+- **Android emulator cannot reach backend:** use `10.0.2.2`, not `localhost`.
+- **AI chat reports unavailable configuration:** provide `DEEPSEEK_API_KEY`; never place it in Git-tracked files.
+- **Chroma startup is slow/unavailable:** leave `CHROMA_AUTO_INIT=false` unless vector features are being exercised.
+- **Crawler returns no articles:** source anti-bot behavior changes; review network/legal constraints before enabling proxy, browser or CAPTCHA integrations.

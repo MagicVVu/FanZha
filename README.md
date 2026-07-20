@@ -1,158 +1,167 @@
 # FanZha - Intelligent Anti-Fraud Assistant
 
-FanZha（反诈通）是一个面向移动端风险识别与家庭守护场景的 Android 客户端。项目将多模态内容提交、AI 连续对话、本地 OCR、风险提醒和设备侧安全数据采集整合在统一交互中，帮助用户在转账、客服理赔、可疑链接、陌生来电等高风险场景下更快获得可解释的风险提示。
+FanZha（反诈通）是一个面向个人风险咨询、可疑内容识别与家庭安全提醒的智能反诈项目。仓库采用移动端与后端同库维护：Android 客户端负责多模态交互、本地 OCR、设备侧风险采集与提醒；Spring Boot 后端负责账户、AI 调用、资料入库、反诈资讯 ETL、关系型存储与向量索引。
 
-> 本仓库公开的是 Android 客户端与服务端 API 契约。模型服务、RAG 知识库、数据库以及服务端实现不在当前仓库中；相关能力只有在接入兼容后端后才能完整运行。
+项目强调“辅助判断”而非替代公安、银行或平台风控。模型结果需要以可解释提示、用户确认和人工处置流程共同约束。
 
 ## Features
 
-- 文本、图片、音频、视频、网站链接和文件的统一风险分析入口
-- 图片本地 OCR 优先策略，低质量结果可回退到服务端分析
-- 支持附件与上下文的 AI 反诈助手，使用 SSE 增量展示结果
-- 安全指数、风险等级、原因解释和处置建议展示
-- 短信、通话记录、剪贴板和已安装应用的授权采集、增量去重与批量上报
-- 风险指令轮询、系统通知、声音和震动提醒
-- 用户资料、家庭成员、拦截统计、学习内容与举报流程界面
-- 深色模式、大字模式和适老化交互支持
+**Android 客户端**
 
-## Capability status
+- 文本、图片、音频、视频、链接和文件的统一风险分析入口
+- ML Kit 本地中文 OCR，并支持低质量结果回退到服务端
+- 支持上下文和附件的 AI 对话、SSE 增量展示
+- 安全指数、风险等级、原因解释和处置建议
+- 经用户授权的短信、通话、剪贴板和应用信息采集、去重与批量上报
+- 风险通知、家庭守护、举报、学习内容、深色与大字模式界面
 
-| Area | Status | Evidence in this repository |
+**Spring Boot 后端**
+
+- 邮箱或手机号注册、登录与 BCrypt 密码存储
+- DeepSeek 兼容的非流式 AI 对话接口
+- TXT、JSON、CSV、HTML、ZIP 等资料解析、脱敏与指纹计算
+- 反诈资讯抓取、清洗、可信度过滤、结构化抽取和 MySQL 持久化
+- Chroma 向量入库与查询，保留独立 Milvus 适配器
+- Actuator、Prometheus 指标与 OpenAPI 文档
+- MySQL / Chroma / Backend 的 Docker Compose 开发环境
+
+## Capability Status
+
+| Area | Status | Notes |
 | --- | --- | --- |
-| Android UI and navigation | Implemented | Compose screens, components and state holders |
-| Local image OCR | Implemented | ML Kit Chinese text recognition |
-| Multimodal request orchestration | Implemented | Retrofit multipart requests and aggregation logic |
-| Streaming assistant | Implemented on client | OkHttp SSE parsing; requires AI service |
-| Device risk collection | Implemented on client | Consent gate, collectors, watermarks and batch ingest |
-| Authentication/profile/family data | Client contract implemented | Requires core API service |
-| LLM, RAG and vector search | External dependency | No model or knowledge-base server source in this repository |
-| SMS OTP verification | Integration pending | Local opt-in value is available only for development |
-| Report progress and learning feeds | Partly local | Some screens currently use bundled/static content |
+| Android UI, OCR and device integration | Implemented | 可独立构建并运行本地能力 |
+| Android REST/SSE orchestration | Implemented on client | 需要兼容服务端 |
+| Backend registration/login | Implemented | 尚未签发访问令牌 |
+| Backend AI chat | Implemented | `POST /ai/chat`，需要外部模型密钥 |
+| Ingestion and ETL | Implemented, opt-in | 默认不注册上传/运维接口 |
+| MySQL and Chroma integration | Implemented | Compose 可启动依赖服务 |
+| Full Android/backend contract alignment | In progress | 当前后端不是 Android 全部接口的直接替代品 |
+| Family, interception dashboard and alert APIs | Client contract only | 本后端尚未实现 |
 
 ## System Architecture
 
 ```mermaid
 flowchart LR
-    U["Android user"] --> UI["Jetpack Compose UI"]
-    UI --> VM["ViewModels and UI state"]
-    VM --> REPO["Repositories"]
-    REPO --> OCR["On-device ML Kit OCR"]
-    REPO --> CORE["Core API contract"]
-    REPO --> AI["AI API and SSE contract"]
-    COL["Consent-aware device collectors"] --> INGEST["Deduplication and batch ingest"]
-    INGEST --> CORE
-    CORE -. external .-> DB["Business data store"]
-    AI -. external .-> RAG["LLM / RAG / vector store"]
+    USER["User"] --> APP["Android / Jetpack Compose"]
+    DEVICE["Consented device signals"] --> APP
+    APP -->|"REST: auth subset"| API["Spring Boot backend"]
+    APP -. "SSE and multimodal contract gap" .-> FUTURE["Assistant API adapter"]
+    API --> AUTH["Account service"]
+    API --> AI["DeepSeek-compatible model API"]
+    API --> ETL["Ingestion and anti-fraud ETL"]
+    AUTH --> MYSQL["MySQL"]
+    ETL --> MYSQL
+    ETL --> BGE["BGE embedding service"]
+    ETL --> CHROMA["Chroma vector store"]
 ```
 
-The client follows an incremental layered structure:
-
-`Compose UI -> ViewModel -> Repository -> remote/local data source`
-
-See [architecture documentation](docs/architecture.md) for module boundaries, critical flows and known engineering trade-offs.
+模块边界、数据流和已知差距见 [系统架构文档](docs/architecture.md)。
 
 ## Technology Stack
 
-**Android**
+| Layer | Technologies |
+| --- | --- |
+| Android | Kotlin 2.2, Jetpack Compose, Coroutines, Retrofit, OkHttp, Gson, ML Kit OCR, Coil |
+| Backend | Java 8, Spring Boot 2.7, Spring Web, Spring Data JPA, Spring Batch, Bean Validation |
+| AI / Data | DeepSeek-compatible API, BGE embeddings, Chroma, experimental Milvus adapter, MySQL 8 |
+| Crawling / Parsing | OkHttp, Jsoup, Playwright, Tess4J, HanLP |
+| Observability | Spring Boot Actuator, Micrometer, Prometheus |
+| Delivery | Gradle, Maven, Docker Compose, GitHub Actions |
 
-- Kotlin 2.2
-- Jetpack Compose and Material 3
-- AndroidX ViewModel and Kotlin Coroutines
-- Retrofit, OkHttp and Gson
-- ML Kit Chinese OCR
-- Coil for image, GIF and SVG loading
-- SharedPreferences-based local persistence
-
-**Quality and delivery**
-
-- Gradle 9.3 / Android Gradle Plugin 9.1
-- JUnit, Robolectric and Compose UI tests
-- GitHub Actions build and unit-test workflow
-
-**External service contracts**
-
-- REST APIs for account, profile, family and interception data
-- Multipart analysis APIs for multimodal content
-- Server-Sent Events for streaming assistant responses
-- The server-side LLM, RAG, vector database and persistence technology are not specified by this client repository
+Redis、JWT、WebSocket 与完整 RAG 问答链路并未在当前代码中实现，因此不作为已交付技术栈描述。
 
 ## Installation
 
-### Prerequisites
+### 1. Clone
 
-- Android Studio with Android SDK 36
-- JDK 17 or the Android Studio embedded runtime
-- A device or emulator running Android 8.1 (API 27) or later
-- Compatible core and AI API services for network-backed features
+```bash
+git clone https://github.com/MagicVVu/FanZha.git
+cd FanZha
+```
 
-### Configure
+### 2. Start the backend
 
-1. Clone the repository.
-2. Open the repository root in Android Studio.
-3. Copy the required values from `config/local.properties.example` into the root `local.properties` generated by Android Studio.
-4. Set `api.base.url` and `ai.api.base.url` to your HTTPS service endpoints.
+Requirements: Docker Engine with Compose, or JDK 8 + Maven 3.8+ + MySQL 8.
 
-The same values can be injected in CI or a shell through `FANZHA_API_BASE_URL` and `FANZHA_AI_API_BASE_URL`. No production endpoint or credential is committed to source control.
+```bash
+cd backend
+cp .env.example .env
+# Replace DB_PASSWORD and MYSQL_ROOT_PASSWORD in .env
+docker compose up --build
+```
 
-### Build and test
+The backend listens on `http://localhost:8080`; health is available at `/actuator/health`. AI, crawler, ingestion and admin operations stay disabled until their environment variables are explicitly enabled. See [backend/README.md](backend/README.md) and [deployment guide](docs/deployment.md).
 
-Windows:
+### 3. Configure Android
+
+Copy values from `config/local.properties.example` into the ignored root `local.properties`:
+
+```properties
+api.base.url=http://10.0.2.2:8080/
+ai.api.base.url=http://10.0.2.2:8080/
+```
+
+`10.0.2.2` maps the Android emulator to the host machine. The current backend directly supports the client registration/login calls, but the assistant SSE/multimodal endpoints still require an adapter or additional implementation.
+
+### 4. Build and test
+
+Android on Windows:
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest :app:assembleDebug
 ```
 
-macOS or Linux:
+Backend:
 
 ```bash
-./gradlew :app:testDebugUnitTest :app:assembleDebug
+cd backend
+./mvnw -B -ntp verify
 ```
-
-The debug APK is generated under `app/build/outputs/apk/debug/`. For device permissions, release signing and troubleshooting, see [deployment documentation](docs/deployment.md).
 
 ## API Documentation
 
-The Android client defines contracts for:
-
-- authentication and registration
-- user profiles, occupations and security scores
-- family-member management
-- interception dashboards, history and batch ingest
-- AI chat, multimodal analysis, SMS checks and report advice
-- risk-notification commands and quiz scores
-
-Endpoint paths, request ownership and integration assumptions are documented in [docs/api.md](docs/api.md).
+- Runtime OpenAPI: `http://localhost:8080/v3/api-docs`
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- Implemented endpoint and Android compatibility matrix: [docs/api.md](docs/api.md)
 
 ## Project Structure
 
 ```text
 FanZha/
-├── .github/workflows/       # Continuous integration
-├── app/                     # Android application module
-│   └── src/
-│       ├── main/            # Production code and resources
-│       ├── test/            # JVM/Robolectric tests
-│       └── androidTest/     # Instrumented Compose tests
-├── config/                  # Safe local configuration templates
-├── docs/                    # Architecture, API, deployment and security docs
-├── gradle/                  # Version catalog and Gradle wrapper
+├── .github/workflows/       # Android and backend CI
+├── app/                     # Android application
+├── backend/                 # Spring Boot API, ETL and AI integration
+│   ├── src/main/
+│   ├── src/test/
+│   ├── scripts/
+│   ├── Dockerfile
+│   └── docker-compose.yml
+├── config/                  # Android-safe configuration templates
+├── database/                # Auditable MySQL schema
+├── docs/                    # Architecture, API, deployment and security
+├── gradle/                  # Gradle wrapper and version catalog
 ├── CONTRIBUTING.md
 ├── build.gradle.kts
 └── settings.gradle.kts
 ```
 
-There are no empty `backend/` or `database/` directories: those sources were not present in the supplied project and are not represented as implemented.
+Runtime datasets, crawler cookies, Playwright profiles, vector database files, build outputs and credentials are intentionally excluded.
 
-## Security and privacy
+## Security and Privacy
 
-This application can request access to SMS, call logs, notifications and installed-app metadata. Collection starts only after an in-app consent step and must be paired with a production privacy policy, data-retention rules and server-side authorization. See [security and privacy notes](docs/security-and-privacy.md) before distributing the application.
+The Android application can process communications and device metadata; the backend accepts user content and can invoke paid model APIs. Production deployment requires a privacy policy, TLS, authentication/authorization, rate limiting, upload isolation, audit logs and retention/deletion controls. Admin and ingestion endpoints are off by default because token-based authorization is not implemented yet. Review [security and privacy notes](docs/security-and-privacy.md) before external distribution.
 
 ## Future Improvement
 
-- Replace client-side development OTP support with a server-issued challenge and verification flow
-- Move from activity-managed route state to Navigation Compose graphs
-- Introduce dependency injection and interfaces around all remote data sources
-- Replace frequent alarm polling with push delivery or constrained background work
-- Encrypt sensitive local state and define deletion/retention controls
-- Add contract tests against a versioned API schema and reproducible multimodal benchmarks
-- Modularize assistant, identification and security-ingest features as the codebase grows
+- Add access/refresh token issuance, role-based authorization and rate limiting
+- Align the backend with the Android SSE and multimodal assistant contract
+- Implement family, interception, alert-command and profile APIs
+- Replace unmanaged background threads with a durable job queue and observable job state
+- Adopt Flyway or Liquibase for versioned schema migration
+- Add Testcontainers integration tests for MySQL and Chroma contracts
+- Introduce retrieval evaluation datasets and measurable anti-fraud quality benchmarks
+- Encrypt sensitive client state and complete data export/deletion workflows
+
+## License
+
+No open-source license is currently granted. Source and bundled assets remain subject to their respective owners' rights until a project-wide license and third-party asset review are completed.

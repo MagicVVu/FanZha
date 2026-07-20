@@ -1,90 +1,100 @@
 # System architecture
 
-## Scope
+## Scope and boundaries
 
-FanZha is currently an Android client. It owns presentation, local device integration, request orchestration and client-side state. Authentication, business persistence, model inference, retrieval and knowledge-base lifecycle are external service responsibilities and are documented only as contracts.
+FanZha is a monorepo containing an Android client and a Spring Boot backend. The two projects share the anti-fraud domain but do not yet have complete API parity: registration/login are compatible at the path and envelope level; the Android assistant, family, dashboard, ingest and alert contracts exceed the current backend surface.
 
-## Context
+This distinction is intentional in the documentation: implemented code is separated from planned integration work.
+
+## System context
 
 ```mermaid
 flowchart TB
     USER["User"] --> APP["FanZha Android app"]
     DEVICE["Android system data"] -->|"runtime permission + consent"| APP
-    APP -->|"REST"| CORE["Core service - external"]
-    APP -->|"REST / multipart / SSE"| AI["AI service - external"]
-    CORE -->|"risk commands"| APP
-    CORE -.-> STORE["Business persistence - external"]
-    AI -.-> KB["LLM / RAG / vector store - external"]
+    APP -->|"auth REST subset"| API["Spring Boot backend"]
+    APP -. "unimplemented contract" .-> ADAPTER["Future assistant/core API adapter"]
+    API --> MYSQL["MySQL: users and fraud_news"]
+    API --> MODEL["DeepSeek-compatible model API"]
+    API --> EMBED["BGE embedding HTTP service"]
+    API --> CHROMA["Chroma vector store"]
+    CRAWL["Configured public sources"] --> ETL["Crawler and ETL pipeline"]
+    ETL --> API
 ```
 
-The dashed components are not included in this repository. Their concrete framework and database cannot be inferred reliably from client code.
+External model, embedding and vector services are optional. Safe defaults keep automatic ETL, crawling, Chroma initialization and privileged HTTP endpoints disabled.
 
-## Client layers
+## Android architecture
 
 | Layer | Responsibility | Key packages |
 | --- | --- | --- |
-| Presentation | Compose screens, reusable components, accessibility themes | `ui/screens`, `ui/components`, `ui/theme` |
-| State orchestration | User actions, loading/error state, aggregation | `ui/viewmodels` |
-| Domain | Security-index calculation and risk-domain rules | `domain` |
-| Data | DTOs, Retrofit contracts, repositories, preferences | `data/model`, `data/remote`, `data/repository`, `data/local` |
-| Device integration | OCR, content collection, notification and broadcast handling | `security`, `sms`, `notifications`, `util` |
+| Presentation | Compose screens, reusable components and accessibility themes | `ui/screens`, `ui/components`, `ui/theme` |
+| State orchestration | User actions, loading/error state and result aggregation | `ui/viewmodels` |
+| Domain | Security index and risk rules | `domain` |
+| Data | DTOs, Retrofit contracts, repositories and preferences | `data/model`, `data/remote`, `data/repository`, `data/local` |
+| Device integration | OCR, content collection, notifications and receivers | `security`, `sms`, `notifications`, `util` |
 
-The intended dependency direction is `UI -> ViewModel -> repository -> remote/local`. A few screens still construct or reference clients directly; dependency injection is a planned refactor rather than an implemented feature.
+The intended dependency direction is `UI -> ViewModel -> repository -> remote/local`. Some dependency construction remains in the application module and is a refactoring target.
 
-## Critical flows
+## Backend architecture
 
-### Multimodal identification
+| Layer | Responsibility | Key packages |
+| --- | --- | --- |
+| API | Request validation, response envelope and feature gating | `controller` |
+| Application services | Authentication, ingestion, crawling, cleaning and ETL orchestration | `service` |
+| Integration | DeepSeek, BGE, Chroma, Milvus, OSS, Playwright and HTTP clients | `util`, `service/chroma`, `service/fraud` |
+| Persistence | JPA accounts and JDBC anti-fraud news storage | `dao`, `entity`, `service/fraud/storage` |
+| Configuration | Typed properties, CORS, OpenAPI and infrastructure beans | `config` |
+
+### Anti-fraud ETL flow
 
 ```mermaid
 sequenceDiagram
-    actor User
-    participant UI as Identification screen
-    participant VM as IdentificationViewModel
-    participant OCR as ML Kit OCR
-    participant API as AI service
-    User->>UI: Submit text, link or media
-    UI->>VM: Analyze request
-    alt Image input
-        VM->>OCR: Extract text locally
-        alt OCR result is usable
-            VM->>API: Analyze extracted text
-        else OCR is insufficient
-            VM->>API: Upload compressed image
-        end
-    else Other modality
-        VM->>API: Send text or multipart file
+    participant S as Scheduler/Admin trigger
+    participant C as Source crawler
+    participant F as Filter and cleaner
+    participant L as LLM extractor
+    participant DB as MySQL
+    participant E as BGE embedding
+    participant V as Chroma
+    S->>C: Start bounded crawl
+    C->>F: Article candidates
+    F->>F: Time, keyword, quality and hash checks
+    opt extraction enabled
+        F->>L: Structured fraud-case extraction
+        L-->>F: Tags, confidence and analysis
     end
-    API-->>VM: Risk level, probability, reasons and advice
-    VM-->>UI: Render normalized result
+    F->>DB: Idempotent upsert by URL/content hash
+    opt embedding available
+        F->>E: Generate vector
+        E-->>F: Embedding
+        F->>V: Upsert document and metadata
+    end
 ```
 
-Multiple media items are evaluated independently and then aggregated conservatively on the client.
+The repository includes two ETL paths: `KnowledgeBaseEtlService` for the earlier Baidu/DeepSeek/Chroma flow and `FraudNewsEtlService` for configurable multi-source collection and richer persistence. Both are disabled by default. Consolidation into one job model is recommended.
 
-### Streaming assistant
+## Authentication and trust boundary
 
-The assistant repository creates multipart requests and parses SSE frames. `start` initializes the session and recommendations, `delta` appends generated text, and `done` closes the response with risk metadata. The client keeps the session identifier and up to three pending attachments.
+Passwords are stored as BCrypt hashes with compatibility migration for legacy salted SHA-256 records. The current login response returns user identity but no access token. Therefore:
 
-### Device-risk ingest
-
-Collection is gated by user consent and Android runtime permissions. SMS, call-log, clipboard and installed-app collectors produce a shared payload. The ingest uploader uses timestamps and content fingerprints to avoid resending unchanged data, then posts a batch to the core service.
-
-### Risk notifications
-
-An alarm receiver polls three risk-command endpoints and coordinates Android notifications. The current short polling interval is sensitive to OEM power policies and battery use; production delivery should prefer push notifications or constrained background work.
+- account endpoints are suitable for integration development, not a complete production identity system;
+- ingestion and admin controllers require explicit feature flags and must remain behind a trusted network;
+- callers cannot treat a user ID as proof of identity;
+- API gateway authentication, application authorization and rate limiting remain required.
 
 ## Configuration boundary
 
-Two service addresses are explicit:
+Android service addresses come from ignored `local.properties` values or environment variables. Backend secrets and environment-specific values come from environment variables referenced by `application.yml`; `.env.example` contains names only.
 
-- `API_BASE_URL`: account, profile, family, dashboard and ingest APIs
-- `AI_API_BASE_URL`: assistant, analysis, SMS checking and report advice
-
-Values come from ignored `local.properties` keys or environment variables. Debug logging is disabled automatically for release builds. Cleartext traffic is enabled only when a configured endpoint explicitly uses `http://`; production deployments should use HTTPS.
+Runtime datasets, crawler checkpoints, browser profiles and vector database files are outside source control. The committed `database/schema.sql` is the auditable baseline for application tables.
 
 ## Known limitations
 
-- The backend, model gateway and knowledge-base pipeline are not open-sourced here.
-- Registration OTP has only an opt-in local integration value; it is not a production verification mechanism.
-- Some learning and report-progress views use bundled/static content.
-- Navigation and dependency construction remain concentrated in the application module.
-- Several sensitive Android permissions require a distribution-channel and privacy review.
+- Android SSE/multimodal assistant paths are not implemented by the backend.
+- Family, profile, interception dashboard and risk-command endpoints exist only as Android contracts.
+- The backend has no JWT/session issuance or role-based authorization.
+- Schema changes are not yet versioned with Flyway or Liquibase.
+- Manual ETL currently starts an in-process daemon thread rather than a durable job.
+- Milvus code is present but the active ETL pipeline uses Chroma.
+- Some Android learning/report screens use bundled or local content.
