@@ -10,4 +10,3 @@ ai.api.base.url=https://ai.example.com/
 # Local integration only. Do not use a client-side OTP in production.
 # The production registration flow must verify OTP on the server.
 registration.otp=
-
